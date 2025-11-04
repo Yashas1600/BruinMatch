@@ -96,9 +96,24 @@ export default function ChatPage() {
     if (!newMessage.trim() || sending) return
 
     setSending(true)
-    const result = await sendMessage(chatId, newMessage.trim())
-    if (result.success) {
-      setNewMessage('')
+    const messageText = newMessage.trim()
+
+    // Optimistic update - show message immediately
+    const tempMessage: Message = {
+      id: `temp-${Date.now()}`,
+      chat_id: chatId,
+      sender: currentUserId,
+      body: messageText,
+      created_at: new Date().toISOString(),
+    }
+    setMessages((prev) => [...prev, tempMessage])
+    setNewMessage('')
+
+    const result = await sendMessage(chatId, messageText)
+    if (!result.success) {
+      // Remove optimistic message if send failed
+      setMessages((prev) => prev.filter((m) => m.id !== tempMessage.id))
+      setNewMessage(messageText)
     }
     setSending(false)
   }
@@ -280,7 +295,7 @@ export default function ChatPage() {
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Type a message..."
             disabled={sending || bothConfirmed}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none disabled:bg-gray-100"
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none disabled:bg-gray-100 text-gray-900"
           />
           <button
             type="submit"
