@@ -167,29 +167,31 @@ export default function ChatPage() {
           </button>
         </Link>
 
-        <div className="relative w-10 h-10 flex-shrink-0">
-          {photos[0] && (
-            <Image
-              src={photos[0]}
-              alt={otherProfile.name}
-              fill
-              className="object-cover rounded-full"
-            />
-          )}
-        </div>
+        <Link href={`/profile/${otherProfile.id}`} className="flex items-center gap-4 flex-1 hover:opacity-80 transition">
+          <div className="relative w-10 h-10 flex-shrink-0">
+            {photos[0] && (
+              <Image
+                src={photos[0]}
+                alt={otherProfile.name}
+                fill
+                className="object-cover rounded-full"
+              />
+            )}
+          </div>
 
-        <div className="flex-1">
-          <h2 className="font-semibold text-gray-900">{otherProfile.name}</h2>
-          {bothConfirmed ? (
-            <p className="text-xs text-green-600 font-medium">✓ PFC Date Confirmed!</p>
-          ) : otherConfirmed ? (
-            <p className="text-xs text-purple-600">Waiting for your confirmation...</p>
-          ) : userConfirmed ? (
-            <p className="text-xs text-purple-600">Waiting for {otherProfile.name}...</p>
-          ) : (
-            <p className="text-xs text-gray-500">{otherProfile.frat}</p>
-          )}
-        </div>
+          <div className="flex-1">
+            <h2 className="font-semibold text-gray-900">{otherProfile.name}</h2>
+            {bothConfirmed ? (
+              <p className="text-xs text-green-600 font-medium">✓ PFC Date Confirmed!</p>
+            ) : otherConfirmed ? (
+              <p className="text-xs text-purple-600">Waiting for your confirmation...</p>
+            ) : userConfirmed ? (
+              <p className="text-xs text-purple-600">Waiting for {otherProfile.name}...</p>
+            ) : (
+              <p className="text-xs text-gray-500">{otherProfile.frat}</p>
+            )}
+          </div>
+        </Link>
 
         <button
           onClick={async () => {

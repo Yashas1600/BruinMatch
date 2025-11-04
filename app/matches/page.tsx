@@ -126,22 +126,24 @@ export default function MatchesPage() {
             {matches.map((match) => {
               const photos = (match.profile.photos as string[]) || []
               return (
-                <Link key={match.matchId} href={`/chat/${match.chatId}`}>
-                  <div className="bg-white rounded-2xl shadow-md hover:shadow-lg transition p-4 flex items-center gap-4">
+                <div key={match.matchId} className="bg-white rounded-2xl shadow-md hover:shadow-lg transition p-4">
+                  <div className="flex items-center gap-4">
                     {/* Profile Photo */}
-                    <div className="relative w-16 h-16 flex-shrink-0">
-                      {photos[0] && (
-                        <Image
-                          src={photos[0]}
-                          alt={match.profile.name}
-                          fill
-                          className="object-cover rounded-full"
-                        />
-                      )}
-                    </div>
+                    <Link href={`/profile/${match.profile.id}`}>
+                      <div className="relative w-16 h-16 flex-shrink-0 cursor-pointer hover:opacity-80 transition">
+                        {photos[0] && (
+                          <Image
+                            src={photos[0]}
+                            alt={match.profile.name}
+                            fill
+                            className="object-cover rounded-full"
+                          />
+                        )}
+                      </div>
+                    </Link>
 
                     {/* Info */}
-                    <div className="flex-1 min-w-0">
+                    <Link href={`/chat/${match.chatId}`} className="flex-1 min-w-0">
                       <h3 className="text-lg font-semibold text-gray-900">
                         {match.profile.name}, {match.profile.age}
                       </h3>
@@ -152,14 +154,30 @@ export default function MatchesPage() {
                       ) : (
                         <p className="text-sm text-gray-400 italic">Start the conversation!</p>
                       )}
-                    </div>
+                    </Link>
 
                     {/* Time */}
                     <div className="text-xs text-gray-400">
                       {formatRelativeTime(match.lastMessage?.createdAt || match.createdAt)}
                     </div>
                   </div>
-                </Link>
+
+                  {/* Action buttons */}
+                  <div className="flex gap-2 mt-3">
+                    <Link
+                      href={`/profile/${match.profile.id}`}
+                      className="flex-1 py-2 text-center border-2 border-pink-500 text-pink-500 rounded-lg font-medium hover:bg-pink-50 transition"
+                    >
+                      View Profile
+                    </Link>
+                    <Link
+                      href={`/chat/${match.chatId}`}
+                      className="flex-1 py-2 text-center bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg font-medium hover:from-pink-600 hover:to-purple-600 transition"
+                    >
+                      Message
+                    </Link>
+                  </div>
+                </div>
               )
             })}
           </div>
