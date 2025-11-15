@@ -8,6 +8,7 @@ import { sendMessage, confirmDate, getChatInfo } from '@/app/actions/chat'
 import { formatRelativeTime } from '@/lib/utils'
 import Image from 'next/image'
 import Link from 'next/link'
+import BottomNav from '@/components/BottomNav'
 
 export default function ChatPage() {
   const params = useParams()
@@ -146,7 +147,8 @@ export default function ChatPage() {
   const photos = (otherProfile.photos as string[]) || []
 
   return (
-    <div className="h-screen bg-gradient-to-br from-pink-50 to-purple-50 flex flex-col">
+    <>
+      <div className="h-screen bg-gradient-to-br from-pink-50 to-purple-50 flex flex-col pb-16">
       {/* Header */}
       <div className="bg-white shadow-md px-4 py-3 flex items-center gap-4">
         <Link href="/matches">
@@ -313,6 +315,9 @@ export default function ChatPage() {
           </p>
         )}
       </form>
-    </div>
+      </div>
+
+      <BottomNav />
+    </>
   )
 }

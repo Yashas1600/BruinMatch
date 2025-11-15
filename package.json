@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "test:mechanics": "npx tsx scripts/test-all-mechanics.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",

@@ -199,7 +199,9 @@ When two users like each other:
 
 ## Testing
 
-Run tests:
+### Unit Tests
+
+Run unit tests:
 
 ```bash
 npm test
@@ -211,10 +213,29 @@ Watch mode:
 npm run test:watch
 ```
 
-Tests cover:
+Unit tests cover:
 - Utility functions (height conversion, image validation, etc.)
 - Matching logic (feed filtering, mutual likes, confirmations)
 - Finalization flow
+
+### Integration Tests
+
+Test all app mechanics end-to-end:
+
+```bash
+npm run test:mechanics
+```
+
+This comprehensive test script:
+- Creates test users with profiles and preferences
+- Tests feed filtering (age, height, gender, frat whitelist)
+- Tests swiping (like/pass)
+- Tests mutual matching and chat creation
+- Tests messaging between matched users
+- Tests date confirmation and finalization
+- Verifies finalized users are excluded from feed
+
+**Note**: Requires `SUPABASE_SERVICE_ROLE_KEY` in your environment for full database access. The script automatically cleans up test data after running.
 
 ## Feature Flags
 

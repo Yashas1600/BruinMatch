@@ -8,6 +8,7 @@ import { swipe, getCandidates } from '@/app/actions/swipes'
 import Image from 'next/image'
 import Link from 'next/link'
 import Header from '@/components/Header'
+import BottomNav from '@/components/BottomNav'
 
 export default function SwipePage() {
   const router = useRouter()
@@ -65,39 +66,48 @@ export default function SwipePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading profiles...</p>
+      <>
+        <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 flex items-center justify-center pb-24">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading profiles...</p>
+          </div>
         </div>
-      </div>
+        <BottomNav />
+      </>
     )
   }
 
   if (!currentCandidate) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 flex items-center justify-center px-4">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">No More Profiles</h2>
-          <p className="text-gray-600 mb-6">
-            You've seen everyone! Check back later or adjust your preferences.
-          </p>
-          <div className="flex flex-col gap-3">
-            <Link
-              href="/preferences"
-              className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 rounded-lg font-semibold hover:from-pink-600 hover:to-purple-600 transition"
-            >
-              Update Preferences
-            </Link>
-            <Link
-              href="/matches"
-              className="w-full bg-gray-100 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-200 transition"
-            >
-              View Matches
-            </Link>
+      <>
+        <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 flex items-center justify-center px-4 pb-24">
+          <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">No More Profiles</h2>
+            <p className="text-gray-600 mb-6">
+              You've seen everyone! Check back later or adjust your preferences.
+            </p>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => {
+                  setCurrentIndex(0)
+                  loadCandidates()
+                }}
+                className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 rounded-lg font-semibold hover:from-pink-600 hover:to-purple-600 transition"
+              >
+                Review Skipped Profiles
+              </button>
+              <Link
+                href="/preferences"
+                className="w-full bg-gray-100 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-200 transition"
+              >
+                Update Preferences
+              </Link>
+            </div>
           </div>
         </div>
-      </div>
+        <BottomNav />
+      </>
     )
   }
 
@@ -105,7 +115,7 @@ export default function SwipePage() {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 py-4 px-4">
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 py-4 px-4 pb-24">
         <Header />
 
         {/* Card */}
@@ -201,6 +211,8 @@ export default function SwipePage() {
           </div>
         </div>
       </div>
+
+      <BottomNav />
 
       {/* Match Modal */}
       {matchModal.show && (

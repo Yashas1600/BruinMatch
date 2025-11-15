@@ -7,6 +7,7 @@ import { formatRelativeTime } from '@/lib/utils'
 import Link from 'next/link'
 import Image from 'next/image'
 import Header from '@/components/Header'
+import BottomNav from '@/components/BottomNav'
 
 type MatchWithProfile = {
   matchId: string
@@ -102,8 +103,9 @@ export default function MatchesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 py-4 px-4">
-      <Header />
+    <>
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 py-4 px-4 pb-24">
+        <Header />
 
       {/* Matches List */}
       <div className="max-w-2xl mx-auto">
@@ -183,6 +185,9 @@ export default function MatchesPage() {
           </div>
         )}
       </div>
-    </div>
+      </div>
+
+      <BottomNav />
+    </>
   )
 }
