@@ -50,6 +50,27 @@ export default function BottomNav() {
             </svg>
           </div>
         </Link>
+
+        {/* Profile Icon */}
+        <Link href="/preferences" className="flex flex-col items-center gap-1 group">
+          <div className={`p-2 rounded-full transition ${
+            pathname === '/preferences'
+              ? 'bg-pink-100'
+              : 'hover:bg-gray-100'
+          }`}>
+            <svg
+              className={`w-7 h-7 transition ${
+                pathname === '/preferences'
+                  ? 'text-pink-500'
+                  : 'text-gray-400 group-hover:text-gray-600'
+              }`}
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+            </svg>
+          </div>
+        </Link>
       </div>
     </nav>
   )

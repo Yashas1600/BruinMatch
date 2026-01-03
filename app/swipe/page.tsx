@@ -27,13 +27,16 @@ export default function SwipePage() {
     loadCandidates()
   }, [])
 
-  const loadCandidates = async () => {
+  const loadCandidates = async (includeSkipped: boolean = false) => {
     setLoading(true)
-    const result = await getCandidates(20)
+    console.log('Loading candidates, includeSkipped:', includeSkipped)
+    const result = await getCandidates(20, includeSkipped)
+    console.log('getCandidates result:', result)
     if (result.success) {
+      console.log('Setting candidates:', result.candidates)
       setCandidates(result.candidates)
-    } else if (result.error === 'Preferences not set') {
-      router.push('/preferences')
+    } else {
+      console.log('Error loading candidates:', result.error)
     }
     setLoading(false)
   }
@@ -42,7 +45,14 @@ export default function SwipePage() {
     if (swiping || !currentCandidate) return
 
     setSwiping(true)
+    console.log('Swiping on:', currentCandidate.id, 'with decision:', decision)
     const result = await swipe(currentCandidate.id, decision)
+    console.log('Swipe result:', result)
+
+    if (!result.success) {
+      console.error('Swipe failed:', result.error)
+      alert('Failed to save swipe: ' + result.error)
+    }
 
     if (result.success && result.matched) {
       setMatchModal({
@@ -54,10 +64,12 @@ export default function SwipePage() {
 
     setSwiping(false)
     setPhotoIndex(0)
-    setCurrentIndex((prev) => prev + 1)
+    const newIndex = currentIndex + 1
+    setCurrentIndex(newIndex)
 
-    // Load more if running low
-    if (currentIndex >= candidates.length - 3) {
+    // Only load more if we've actually run out and there might be more
+    // Don't reload while we still have candidates to show
+    if (newIndex >= candidates.length && candidates.length >= 20) {
       loadCandidates()
     }
   }
@@ -91,7 +103,7 @@ export default function SwipePage() {
               <button
                 onClick={() => {
                   setCurrentIndex(0)
-                  loadCandidates()
+                  loadCandidates(true)
                 }}
                 className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 rounded-lg font-semibold hover:from-pink-600 hover:to-purple-600 transition"
               >

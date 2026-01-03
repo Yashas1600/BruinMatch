@@ -14,6 +14,46 @@ export async function sendMessage(chatId: string, body: string) {
   }
 
   try {
+    // Get the match for this chat
+    const { data: chat } = await supabase
+      .from('chats')
+      .select('*, matches(*)')
+      .eq('id', chatId)
+      .single()
+
+    if (!chat) {
+      return { success: false, error: 'Chat not found' }
+    }
+
+    const match = chat.matches as any
+    const otherUserId = match.user_a === user.id ? match.user_b : match.user_a
+
+    // Check if either user has confirmed with someone else (expired match)
+    const { data: otherUserConfirmation } = await supabase
+      .from('date_confirmations')
+      .select('*, matches!inner(*)')
+      .eq('confirmer', otherUserId)
+      .limit(1)
+      .single()
+
+    const { data: currentUserConfirmation } = await supabase
+      .from('date_confirmations')
+      .select('*, matches!inner(*)')
+      .eq('confirmer', user.id)
+      .limit(1)
+      .single()
+
+    // Check if match is expired
+    const otherUserConfirmedElsewhere = otherUserConfirmation && otherUserConfirmation.match_id !== match.id
+    const currentUserConfirmedElsewhere = currentUserConfirmation && currentUserConfirmation.match_id !== match.id
+
+    if (otherUserConfirmedElsewhere || currentUserConfirmedElsewhere) {
+      return {
+        success: false,
+        error: 'This conversation has expired. One of you has already confirmed with someone else.'
+      }
+    }
+
     const { data, error } = await supabase
       .from('messages')
       .insert({
@@ -44,7 +84,22 @@ export async function confirmDate(matchId: string) {
   }
 
   try {
-    // Check if already confirmed
+    // Check if user has ALREADY confirmed with ANYONE (first match wins)
+    const { data: anyExistingConfirmation } = await supabase
+      .from('date_confirmations')
+      .select('*, matches!inner(*)')
+      .eq('confirmer', user.id)
+      .limit(1)
+      .single()
+
+    if (anyExistingConfirmation) {
+      return {
+        success: false,
+        error: 'You have already confirmed a date with someone else. You can only confirm one match!'
+      }
+    }
+
+    // Check if already confirmed this specific match
     const { data: existing } = await supabase
       .from('date_confirmations')
       .select('*')
@@ -73,6 +128,7 @@ export async function confirmDate(matchId: string) {
     const bothConfirmed = confirmations && confirmations.length === 2
 
     revalidatePath(`/chat`)
+    revalidatePath(`/matches`)
     return { success: true, bothConfirmed }
   } catch (error: any) {
     return { success: false, error: error.message }

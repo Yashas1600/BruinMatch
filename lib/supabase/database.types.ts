@@ -6,6 +6,7 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
+export type Gender = 'men' | 'women'
 export type GenderPreference = 'men' | 'women' | 'everyone'
 export type SwipeDecision = 'like' | 'pass'
 
@@ -18,12 +19,14 @@ export interface Database {
           email: string
           name: string
           age: number
+          gender: Gender
           frat: string
           height_cm: number
           interested_in: GenderPreference
           one_liner: string
           photos: Json
           is_finalized: boolean
+          dating_pool: string
           created_at: string
           updated_at: string
         }
@@ -32,10 +35,12 @@ export interface Database {
           email: string
           name: string
           age: number
+          gender: Gender
           frat: string
           height_cm: number
           interested_in: GenderPreference
           one_liner: string
+          dating_pool: string
           photos?: Json
           is_finalized?: boolean
           created_at?: string
@@ -46,12 +51,14 @@ export interface Database {
           email?: string
           name?: string
           age?: number
+          gender?: Gender
           frat?: string
           height_cm?: number
           interested_in?: GenderPreference
           one_liner?: string
           photos?: Json
           is_finalized?: boolean
+          dating_pool?: string
           created_at?: string
           updated_at?: string
         }

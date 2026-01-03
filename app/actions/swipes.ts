@@ -14,14 +14,33 @@ export async function swipe(swipeeId: string, decision: 'like' | 'pass') {
   }
 
   try {
-    // Insert the swipe
-    const { error: swipeError } = await supabase.from('swipes').insert({
-      swiper: user.id,
-      swipee: swipeeId,
-      decision,
-    })
+    // Check if a swipe already exists
+    const { data: existingSwipe } = await supabase
+      .from('swipes')
+      .select('*')
+      .eq('swiper', user.id)
+      .eq('swipee', swipeeId)
+      .single()
 
-    if (swipeError) throw swipeError
+    if (existingSwipe) {
+      // Update existing swipe
+      const { error: updateError } = await supabase
+        .from('swipes')
+        .update({ decision })
+        .eq('swiper', user.id)
+        .eq('swipee', swipeeId)
+
+      if (updateError) throw updateError
+    } else {
+      // Insert new swipe
+      const { error: swipeError } = await supabase.from('swipes').insert({
+        swiper: user.id,
+        swipee: swipeeId,
+        decision,
+      })
+
+      if (swipeError) throw swipeError
+    }
 
     // If it's a like, check for mutual match
     if (decision === 'like') {
@@ -97,7 +116,7 @@ export async function swipe(swipeeId: string, decision: 'like' | 'pass') {
   }
 }
 
-export async function getCandidates(limit: number = 10) {
+export async function getCandidates(limit: number = 10, includeSkipped: boolean = false) {
   const supabase = await createClient()
 
   const {
@@ -119,46 +138,94 @@ export async function getCandidates(limit: number = 10) {
       return { success: false, error: 'Preferences not set', candidates: [] }
     }
 
-    // Get user's profile to check gender
+    // Get user's profile to check gender and dating_pool
     const { data: userProfile } = await supabase
       .from('profiles')
-      .select('interested_in')
+      .select('gender, dating_pool')
       .eq('id', user.id)
       .single()
 
+    if (!userProfile) {
+      return { success: false, error: 'Profile not found', candidates: [] }
+    }
+
     // Get IDs of users already swiped
-    const { data: swipedUsers } = await supabase
-      .from('swipes')
-      .select('swipee')
-      .eq('swiper', user.id)
+    let swipedIds: string[] = []
+    let passedIds: string[] = []
 
-    const swipedIds = swipedUsers?.map((s) => s.swipee) || []
+    if (includeSkipped) {
+      // Only show profiles they passed on
+      const { data: passedUsers, error: passedError } = await supabase
+        .from('swipes')
+        .select('swipee')
+        .eq('swiper', user.id)
+        .eq('decision', 'pass')
 
-    // Build query for candidates
+      console.log('Passed users query:', { passedUsers, passedError, userId: user.id })
+      passedIds = passedUsers?.map((s) => s.swipee) || []
+      console.log('Passed IDs:', passedIds)
+    } else {
+      // Exclude all swiped users
+      const { data: swipedUsers } = await supabase
+        .from('swipes')
+        .select('swipee')
+        .eq('swiper', user.id)
+
+      swipedIds = swipedUsers?.map((s) => s.swipee) || []
+    }
+
+    // If reviewing skipped profiles, show all passed profiles without filters
+    if (includeSkipped) {
+      console.log('includeSkipped is true, passedIds:', passedIds)
+      if (passedIds.length > 0) {
+        // Don't apply limit when reviewing skipped - show all of them
+        const { data: passedProfiles, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .in('id', passedIds)
+          .eq('is_finalized', false)
+          .eq('dating_pool', userProfile.dating_pool)
+
+        console.log('Passed profiles result:', { passedProfiles, error })
+        if (error) throw error
+
+        return { success: true, candidates: passedProfiles || [] }
+      } else {
+        console.log('No passed IDs found')
+        return { success: true, candidates: [] }
+      }
+    }
+
+    // Build query for candidates (normal mode)
+    console.log('Building query with filters:', {
+      age_min: preferences.age_min,
+      age_max: preferences.age_max,
+      height_min: preferences.height_min,
+      height_max: preferences.height_max,
+      frat_whitelist: preferences.frat_whitelist,
+      currentUserId: user.id
+    })
+
     let query = supabase
       .from('profiles')
       .select('*')
       .eq('is_finalized', false)
+      .eq('dating_pool', userProfile.dating_pool)
       .neq('id', user.id)
       .gte('age', preferences.age_min)
       .lte('age', preferences.age_max)
       .gte('height_cm', preferences.height_min)
       .lte('height_cm', preferences.height_max)
 
-    // Filter by interested_in (mutual gender interest)
-    // User wants to see people who match their preference
-    // AND those people want to see the user's gender
-    if (preferences.interested_in !== 'everyone') {
-      query = query.eq('interested_in', preferences.interested_in)
-    }
-
     // Apply frat whitelist if set
     if (preferences.frat_whitelist && preferences.frat_whitelist.length > 0) {
+      console.log('Applying frat whitelist filter:', preferences.frat_whitelist)
       query = query.in('frat', preferences.frat_whitelist)
     }
 
     // Exclude already swiped
     if (swipedIds.length > 0) {
+      console.log('Excluding already swiped IDs:', swipedIds)
       query = query.not('id', 'in', `(${swipedIds.join(',')})`)
     }
 
@@ -166,18 +233,22 @@ export async function getCandidates(limit: number = 10) {
 
     if (error) throw error
 
-    // Additional filtering for gender compatibility
-    const filteredCandidates = (candidates || []).filter((candidate) => {
-      // Check if candidate's preference includes user's profile
-      if (candidate.interested_in === 'everyone') return true
-      if (preferences.interested_in === 'everyone') return true
+    console.log('Raw candidates from query:', candidates)
+    console.log('User preferences:', preferences)
+    console.log('Excluded swipe IDs:', swipedIds)
 
-      // Both have specific preferences - check compatibility
-      return (
-        (preferences.interested_in === 'men' && candidate.interested_in === 'women') ||
-        (preferences.interested_in === 'women' && candidate.interested_in === 'men')
+    // Filter by gender matching logic - only check what the current user wants to see
+    const filteredCandidates = (candidates || []).filter((candidate) => {
+      // Only check if current user wants to see this candidate's gender
+      const matches = (
+        preferences.interested_in === 'everyone' ||
+        preferences.interested_in === candidate.gender
       )
+      console.log(`Candidate ${candidate.name} (gender: ${candidate.gender}): ${matches ? 'INCLUDED' : 'FILTERED OUT'}`)
+      return matches
     })
+
+    console.log('Filtered candidates:', filteredCandidates)
 
     return { success: true, candidates: filteredCandidates }
   } catch (error: any) {

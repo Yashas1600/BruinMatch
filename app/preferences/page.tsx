@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { UCLA_FRATS_SORORITIES, GENDER_OPTIONS, MAX_PHOTOS } from '@/lib/constants'
 import { feetInchesToCm, cmToFeetInches, validateImageFile } from '@/lib/utils'
 import Header from '@/components/Header'
+import BottomNav from '@/components/BottomNav'
 import Image from 'next/image'
 
 export default function PreferencesPage() {
@@ -15,6 +16,7 @@ export default function PreferencesPage() {
   const [profileData, setProfileData] = useState({
     name: '',
     age: '',
+    gender: 'men' as 'men' | 'women',
     frat: '',
     heightFeet: '',
     heightInches: '',
@@ -70,6 +72,7 @@ export default function PreferencesPage() {
         setProfileData({
           name: profile.name,
           age: profile.age.toString(),
+          gender: profile.gender || 'men',
           frat: profile.frat,
           heightFeet: feet,
           heightInches: inches,
@@ -144,6 +147,7 @@ export default function PreferencesPage() {
         .update({
           name: profileData.name,
           age: parseInt(profileData.age),
+          gender: profileData.gender,
           frat: profileData.frat,
           height_cm: profile_height_cm,
           one_liner: profileData.one_liner,
@@ -304,8 +308,9 @@ export default function PreferencesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 py-4 px-4">
-      <Header />
+    <>
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 py-4 px-4 pb-24">
+        <Header />
       <div className="max-w-2xl mx-auto mt-4">
         {/* Tab Buttons */}
         <div className="flex gap-2 mb-4">
@@ -376,6 +381,35 @@ export default function PreferencesPage() {
                   required
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none text-gray-900"
                 />
+              </div>
+
+              {/* Gender */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">I am a: *</label>
+                <div className="flex gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setProfileData({ ...profileData, gender: 'men' })}
+                    className={`flex-1 py-3 rounded-lg font-medium transition ${
+                      profileData.gender === 'men'
+                        ? 'bg-pink-500 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Man
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setProfileData({ ...profileData, gender: 'women' })}
+                    className={`flex-1 py-3 rounded-lg font-medium transition ${
+                      profileData.gender === 'women'
+                        ? 'bg-pink-500 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Woman
+                  </button>
+                </div>
               </div>
 
               {/* Frat/Sorority */}
@@ -663,6 +697,9 @@ export default function PreferencesPage() {
           </form>
         )}
       </div>
-    </div>
+      </div>
+
+      <BottomNav />
+    </>
   )
 }

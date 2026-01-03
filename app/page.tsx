@@ -22,15 +22,5 @@ export default async function Home() {
     redirect('/onboarding')
   }
 
-  const { data: preferences } = await supabase
-    .from('preferences')
-    .select('*')
-    .eq('user_id', user.id)
-    .single()
-
-  if (!preferences) {
-    redirect('/preferences')
-  }
-
   redirect('/swipe')
 }

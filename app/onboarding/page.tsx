@@ -11,13 +11,20 @@ export default function OnboardingPage() {
   const router = useRouter()
   const supabase = createClient()
 
+  const [step, setStep] = useState<'code' | 'profile'>('code')
+  const [eventCode, setEventCode] = useState('')
+  const [codeError, setCodeError] = useState<string | null>(null)
+  const [validatingCode, setValidatingCode] = useState(false)
+
   const [formData, setFormData] = useState({
     name: '',
     age: '',
+    gender: 'men' as 'men' | 'women',
     frat: '',
     heightFeet: '',
     heightInches: '',
     interested_in: 'everyone' as 'men' | 'women' | 'everyone',
+    frat_whitelist: [] as string[],
     one_liner: '',
   })
 
@@ -25,6 +32,35 @@ export default function OnboardingPage() {
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const handleEventCodeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setValidatingCode(true)
+    setCodeError(null)
+
+    try {
+      // Check if any profiles exist with this dating_pool
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('dating_pool')
+        .eq('dating_pool', eventCode)
+        .limit(1)
+
+      if (error) throw error
+
+      if (!data || data.length === 0) {
+        setCodeError('Invalid event code. Please check with your event organizer.')
+        return
+      }
+
+      // Code is valid, proceed to profile creation
+      setStep('profile')
+    } catch (err: any) {
+      setCodeError('An error occurred. Please try again.')
+    } finally {
+      setValidatingCode(false)
+    }
+  }
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
@@ -102,16 +138,31 @@ export default function OnboardingPage() {
         email: user.email!,
         name: formData.name,
         age: parseInt(formData.age),
+        gender: formData.gender,
         frat: formData.frat,
         height_cm,
         interested_in: formData.interested_in,
         one_liner: formData.one_liner,
         photos: photoUrls,
+        dating_pool: eventCode,
       })
 
       if (profileError) throw profileError
 
-      router.push('/preferences')
+      // Create preferences
+      const { error: prefsError } = await supabase.from('preferences').insert({
+        user_id: user.id,
+        frat_whitelist: formData.frat_whitelist.length > 0 ? formData.frat_whitelist : null,
+        age_min: 18,
+        age_max: 100,
+        height_min: feetInchesToCm(4, 0),
+        height_max: feetInchesToCm(7, 0),
+        interested_in: formData.interested_in,
+      })
+
+      if (prefsError) throw prefsError
+
+      router.push('/swipe')
     } catch (err: any) {
       setError(err.message || 'An error occurred')
     } finally {
@@ -119,11 +170,63 @@ export default function OnboardingPage() {
     }
   }
 
+  // Event Code Step
+  if (step === 'code') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 py-8 px-4">
+        <div className="max-w-md mx-auto bg-white rounded-2xl shadow-xl p-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Join Your Event</h1>
+          <p className="text-gray-600 mb-8">Enter your event code to get started</p>
+
+          <form onSubmit={handleEventCodeSubmit} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Event Code *</label>
+              <input
+                type="text"
+                value={eventCode}
+                onChange={(e) => setEventCode(e.target.value)}
+                required
+                placeholder="Enter your event code"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none text-gray-900"
+              />
+              <p className="text-sm text-gray-500 mt-1">
+                You'll only be matched with people who have the same event code
+              </p>
+            </div>
+
+            {codeError && (
+              <div className="p-4 bg-red-50 text-red-800 rounded-lg border border-red-200">
+                {codeError}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={validatingCode || !eventCode}
+              className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 rounded-lg font-semibold hover:from-pink-600 hover:to-purple-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {validatingCode ? 'Validating...' : 'Continue'}
+            </button>
+          </form>
+        </div>
+      </div>
+    )
+  }
+
+  // Profile Creation Step
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 py-8 px-4">
       <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Your Profile</h1>
-        <p className="text-gray-600 mb-8">Tell us about yourself to get started</p>
+        <div className="mb-8">
+          <button
+            onClick={() => setStep('code')}
+            className="text-pink-500 hover:text-pink-600 mb-4 flex items-center gap-2"
+          >
+            ← Back to event code
+          </button>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Your Profile</h1>
+          <p className="text-gray-600">Event: <span className="font-semibold">{eventCode}</span></p>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Name */}
@@ -211,9 +314,9 @@ export default function OnboardingPage() {
             <div className="flex gap-4">
               <button
                 type="button"
-                onClick={() => setFormData({ ...formData, interested_in: 'women' as any })}
+                onClick={() => setFormData({ ...formData, gender: 'men' })}
                 className={`flex-1 py-3 rounded-lg font-medium transition ${
-                  formData.interested_in === 'women'
+                  formData.gender === 'men'
                     ? 'bg-pink-500 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
@@ -222,9 +325,9 @@ export default function OnboardingPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setFormData({ ...formData, interested_in: 'men' as any })}
+                onClick={() => setFormData({ ...formData, gender: 'women' })}
                 className={`flex-1 py-3 rounded-lg font-medium transition ${
-                  formData.interested_in === 'men'
+                  formData.gender === 'women'
                     ? 'bg-pink-500 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
@@ -232,9 +335,62 @@ export default function OnboardingPage() {
                 Woman
               </button>
             </div>
-            <p className="text-sm text-gray-500 mt-2">
-              This helps us show you to the right people. You'll choose who you want to see on the next page.
+          </div>
+
+          {/* Interested In */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Show me: *
+            </label>
+            <div className="flex gap-4">
+              {GENDER_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setFormData({ ...formData, interested_in: option.value as any })}
+                  className={`flex-1 py-3 rounded-lg font-medium transition ${
+                    formData.interested_in === option.value
+                      ? 'bg-pink-500 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Frat Whitelist */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Only show me people from (Optional)
+            </label>
+            <p className="text-sm text-gray-500 mb-3">
+              Leave empty to see everyone, or select specific fraternities/sororities
             </p>
+            <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto p-2 border border-gray-200 rounded-lg">
+              {UCLA_FRATS_SORORITIES.map((frat) => (
+                <button
+                  key={frat}
+                  type="button"
+                  onClick={() => {
+                    setFormData({
+                      ...formData,
+                      frat_whitelist: formData.frat_whitelist.includes(frat)
+                        ? formData.frat_whitelist.filter(f => f !== frat)
+                        : [...formData.frat_whitelist, frat],
+                    })
+                  }}
+                  className={`py-2 px-3 rounded-lg text-sm font-medium transition ${
+                    formData.frat_whitelist.includes(frat)
+                      ? 'bg-pink-500 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {frat}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* One-liner */}
@@ -309,7 +465,7 @@ export default function OnboardingPage() {
             disabled={loading || photos.length !== MAX_PHOTOS}
             className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 rounded-lg font-semibold hover:from-pink-600 hover:to-purple-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Creating Profile...' : 'Continue to Preferences'}
+            {loading ? 'Creating Profile...' : 'Start Swiping'}
           </button>
         </form>
       </div>

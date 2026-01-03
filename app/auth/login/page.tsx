@@ -89,6 +89,15 @@ export default function LoginPage() {
         <p className="mt-6 text-center text-sm text-gray-600">
           We'll send you a magic link to sign in without a password.
         </p>
+
+        <div className="mt-4 text-center">
+          <a
+            href="/admin/login"
+            className="text-xs text-gray-400 hover:text-gray-600 transition"
+          >
+            Admin Login
+          </a>
+        </div>
       </div>
     </div>
   )

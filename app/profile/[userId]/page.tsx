@@ -69,12 +69,12 @@ export default function ProfilePage() {
   const photos = (profile.photos as string[]) || []
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 py-4 px-4">
-      <div className="max-w-2xl mx-auto">
-        {/* Back button */}
+    <div className="h-screen bg-gradient-to-br from-pink-50 to-purple-50 flex flex-col">
+      {/* Back button */}
+      <div className="p-4">
         <button
           onClick={() => router.back()}
-          className="mb-4 p-2 hover:bg-white/50 rounded-full transition flex items-center gap-2 text-gray-700"
+          className="p-2 hover:bg-white/50 rounded-full transition flex items-center gap-2 text-gray-700"
         >
           <svg
             className="w-6 h-6"
@@ -91,12 +91,14 @@ export default function ProfilePage() {
           </svg>
           Back
         </button>
+      </div>
 
-        {/* Profile Card */}
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+      {/* Profile Card */}
+      <div className="flex-1 overflow-y-auto px-4 pb-4">
+        <div className="max-w-md mx-auto bg-white rounded-2xl shadow-xl overflow-hidden h-full flex flex-col">
           {/* Photos */}
-          <div className="relative">
-            <div className="relative aspect-[3/4] w-full">
+          <div className="relative flex-shrink-0">
+            <div className="relative aspect-[3/4] w-full max-h-[60vh]">
               {photos[currentPhotoIndex] && (
                 <Image
                   src={photos[currentPhotoIndex]}
@@ -179,10 +181,10 @@ export default function ProfilePage() {
           </div>
 
           {/* Profile Info */}
-          <div className="p-6 space-y-4">
+          <div className="p-6 space-y-3 flex-1 overflow-y-auto">
             {/* Name and Age */}
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-2xl font-bold text-gray-900">
                 {profile.name}, {profile.age}
               </h1>
             </div>
@@ -225,7 +227,7 @@ export default function ProfilePage() {
 
             {/* One-liner */}
             {profile.one_liner && (
-              <div className="pt-4 border-t border-gray-200">
+              <div className="pt-3 border-t border-gray-200">
                 <p className="text-gray-700 italic">&quot;{profile.one_liner}&quot;</p>
               </div>
             )}
