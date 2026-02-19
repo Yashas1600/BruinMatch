@@ -45,19 +45,25 @@ export async function getPoolStatusForCurrentUser(): Promise<{
   return { status, poolCode: profile.dating_pool }
 }
 
-/** For onboarding: is this pool code valid? (in pool_config OR at least one profile has it) */
+// Fallback pool code that always works (e.g. if pool_config table not set up yet)
+const FALLBACK_POOL_CODE = 'POOLPFC26Y'
+
+/** For onboarding: is this pool code valid? (in pool_config OR at least one profile has it). Case-insensitive. */
 export async function isPoolCodeValid(poolCode: string): Promise<boolean> {
+  const normalized = poolCode.trim().toUpperCase()
+  if (!normalized) return false
+  if (normalized === FALLBACK_POOL_CODE) return true
   const supabase = await createClient()
-  const { data: config } = await supabase
+  const { data: config, error: configError } = await supabase
     .from('pool_config')
     .select('pool_code')
-    .eq('pool_code', poolCode)
+    .eq('pool_code', normalized)
     .single()
-  if (config) return true
+  if (!configError && config) return true
   const { count } = await supabase
     .from('profiles')
     .select('*', { count: 'exact', head: true })
-    .eq('dating_pool', poolCode)
+    .ilike('dating_pool', normalized)
   return (count ?? 0) > 0
 }
 

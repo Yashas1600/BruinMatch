@@ -12,11 +12,6 @@ export default function OnboardingPage() {
   const router = useRouter()
   const supabase = createClient()
 
-  const [step, setStep] = useState<'code' | 'profile'>('code')
-  const [eventCode, setEventCode] = useState('')
-  const [codeError, setCodeError] = useState<string | null>(null)
-  const [validatingCode, setValidatingCode] = useState(false)
-
   const [formData, setFormData] = useState({
     name: '',
     age: '',
@@ -33,28 +28,6 @@ export default function OnboardingPage() {
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  const handleEventCodeSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setValidatingCode(true)
-    setCodeError(null)
-
-    try {
-      const { isPoolCodeValid } = await import('@/app/actions/pool')
-      const trimmed = eventCode.trim()
-      const valid = await isPoolCodeValid(trimmed)
-      if (!valid) {
-        setCodeError('Invalid dating pool code. Please check with your event organizer.')
-        return
-      }
-      setEventCode(trimmed)
-      setStep('profile')
-    } catch (err: any) {
-      setCodeError('An error occurred. Please try again.')
-    } finally {
-      setValidatingCode(false)
-    }
-  }
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
@@ -138,7 +111,7 @@ export default function OnboardingPage() {
         interested_in: formData.interested_in,
         one_liner: formData.one_liner,
         photos: photoUrls,
-        dating_pool: eventCode,
+        dating_pool: 'POOLPFC26Y',
       })
 
       if (profileError) throw profileError
@@ -164,66 +137,15 @@ export default function OnboardingPage() {
     }
   }
 
-  // Event Code Step
-  if (step === 'code') {
-    return (
-      <div className="min-h-screen bg-pink-500 py-8 px-4">
-        <div className="max-w-md mx-auto bg-white rounded-2xl shadow-xl p-8">
-          <div className="flex justify-center mb-4">
-            <EightBallLogo size={64} />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2 text-center">Pool</h1>
-          <p className="text-gray-600 mb-2 text-center">Meet people in your pool</p>
-          <p className="text-gray-600 mb-8 text-center">Enter your dating pool code to get started</p>
-
-          <form onSubmit={handleEventCodeSubmit} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Dating Pool Code *</label>
-              <input
-                type="text"
-                value={eventCode}
-                onChange={(e) => setEventCode(e.target.value)}
-                required
-                placeholder="Enter your dating pool code"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none text-gray-900"
-              />
-              <p className="text-sm text-gray-500 mt-1">
-                You'll only be matched with people who have the same dating pool code
-              </p>
-            </div>
-
-            {codeError && (
-              <div className="p-4 bg-red-50 text-red-800 rounded-lg border border-red-200">
-                {codeError}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={validatingCode || !eventCode}
-              className="w-full bg-pink-500 text-white py-3 rounded-lg font-semibold hover:bg-pink-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {validatingCode ? 'Validating...' : 'Continue'}
-            </button>
-          </form>
-        </div>
-      </div>
-    )
-  }
-
-  // Profile Creation Step
   return (
     <div className="min-h-screen bg-pink-500 py-8 px-4">
       <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-8">
         <div className="mb-8">
-          <button
-            onClick={() => setStep('code')}
-            className="text-pink-500 hover:text-pink-600 mb-4 flex items-center gap-2"
-          >
-            ← Back to dating pool code
-          </button>
+          <div className="flex justify-center mb-4">
+            <EightBallLogo size={64} />
+          </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Your Profile</h1>
-          <p className="text-gray-600">Dating Pool: <span className="font-semibold">{eventCode}</span></p>
+          <p className="text-gray-600">Set up your account to get started</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
