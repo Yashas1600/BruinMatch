@@ -41,7 +41,7 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 flex items-center justify-center">
+      <div className="min-h-screen bg-pink-500 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading profile...</p>
@@ -52,7 +52,7 @@ export default function ProfilePage() {
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 flex items-center justify-center">
+      <div className="min-h-screen bg-pink-500 flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-600">Profile not found</p>
           <Link
@@ -69,7 +69,7 @@ export default function ProfilePage() {
   const photos = (profile.photos as string[]) || []
 
   return (
-    <div className="h-screen bg-gradient-to-br from-pink-50 to-purple-50 flex flex-col">
+    <div className="h-screen bg-pink-500 flex flex-col">
       {/* Back button */}
       <div className="p-4">
         <button

@@ -98,6 +98,23 @@ export interface Database {
           updated_at?: string
         }
       }
+      pool_config: {
+        Row: {
+          pool_code: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          pool_code: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          pool_code?: string
+          status?: string
+          updated_at?: string
+        }
+      }
       swipes: {
         Row: {
           id: string

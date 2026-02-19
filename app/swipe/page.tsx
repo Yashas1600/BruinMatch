@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Profile } from '@/lib/supabase/database.types'
 import { cmToFeetInches } from '@/lib/utils'
 import { swipe, getCandidates } from '@/app/actions/swipes'
+import { getPoolStatusForCurrentUser } from '@/app/actions/pool'
 import Image from 'next/image'
 import Link from 'next/link'
 import Header from '@/components/Header'
@@ -17,6 +18,7 @@ export default function SwipePage() {
   const [photoIndex, setPhotoIndex] = useState(0)
   const [loading, setLoading] = useState(true)
   const [swiping, setSwiping] = useState(false)
+  const [poolGate, setPoolGate] = useState<'open' | 'waiting' | 'paused' | null>(null)
   const [matchModal, setMatchModal] = useState<{
     show: boolean
     matchId?: string
@@ -24,7 +26,29 @@ export default function SwipePage() {
   }>({ show: false })
 
   useEffect(() => {
-    loadCandidates()
+    let cancelled = false
+    async function init() {
+      const pool = await getPoolStatusForCurrentUser()
+      if (cancelled) return
+      if (!pool) {
+        setLoading(false)
+        return
+      }
+      if (pool.status === 'waiting') {
+        setPoolGate('waiting')
+        setLoading(false)
+        return
+      }
+      if (pool.status === 'paused') {
+        setPoolGate('paused')
+        setLoading(false)
+        return
+      }
+      setPoolGate('open')
+      loadCandidates()
+    }
+    init()
+    return () => { cancelled = true }
   }, [])
 
   const loadCandidates = async (includeSkipped: boolean = false) => {
@@ -76,10 +100,39 @@ export default function SwipePage() {
 
   const currentCandidate = candidates[currentIndex]
 
+  if (poolGate === 'waiting') {
+    router.replace('/waiting')
+    return null
+  }
+
+  if (poolGate === 'paused') {
+    return (
+      <>
+        <div className="min-h-screen bg-pink-500 flex items-center justify-center px-4 pb-24">
+          <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
+            <div className="text-5xl mb-4">⏸</div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Matching has been paused</h1>
+            <p className="text-gray-600">
+              New profiles aren&apos;t visible right now. Check back later—we&apos;ll resume
+              matching soon.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-6 text-pink-600 hover:text-pink-700 font-medium"
+            >
+              Refresh
+            </button>
+          </div>
+        </div>
+        <BottomNav />
+      </>
+    )
+  }
+
   if (loading) {
     return (
       <>
-        <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 flex items-center justify-center pb-24">
+        <div className="min-h-screen bg-pink-500 flex items-center justify-center pb-24">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mx-auto mb-4"></div>
             <p className="text-gray-600">Loading profiles...</p>
@@ -93,7 +146,7 @@ export default function SwipePage() {
   if (!currentCandidate) {
     return (
       <>
-        <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 flex items-center justify-center px-4 pb-24">
+        <div className="min-h-screen bg-pink-500 flex items-center justify-center px-4 pb-24">
           <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">No More Profiles</h2>
             <p className="text-gray-600 mb-6">
@@ -105,7 +158,7 @@ export default function SwipePage() {
                   setCurrentIndex(0)
                   loadCandidates(true)
                 }}
-                className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 rounded-lg font-semibold hover:from-pink-600 hover:to-purple-600 transition"
+                className="w-full bg-pink-500 text-white py-3 rounded-lg font-semibold hover:bg-pink-600 transition"
               >
                 Review Skipped Profiles
               </button>
@@ -127,7 +180,7 @@ export default function SwipePage() {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 py-4 px-4 pb-24">
+      <div className="min-h-screen bg-pink-500 py-4 px-4 pb-24">
         <Header />
 
         {/* Card */}
@@ -210,7 +263,7 @@ export default function SwipePage() {
             <button
               onClick={() => handleSwipe('like')}
               disabled={swiping}
-              className="w-20 h-20 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full shadow-lg hover:shadow-xl transition-all transform hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="w-20 h-20 bg-pink-500 rounded-full shadow-lg hover:shadow-xl transition-all transform hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
                 <path
@@ -238,7 +291,7 @@ export default function SwipePage() {
             <div className="flex flex-col gap-3">
               <button
                 onClick={() => router.push(`/chat/${matchModal.chatId}`)}
-                className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 rounded-lg font-semibold hover:from-pink-600 hover:to-purple-600 transition"
+                className="w-full bg-pink-500 text-white py-3 rounded-lg font-semibold hover:bg-pink-600 transition"
               >
                 Send a Message
               </button>

@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { UCLA_FRATS_SORORITIES, GENDER_OPTIONS, MAX_PHOTOS } from '@/lib/constants'
 import { validateImageFile, feetInchesToCm } from '@/lib/utils'
 import Image from 'next/image'
+import EightBallLogo from '@/components/EightBallLogo'
 
 export default function OnboardingPage() {
   const router = useRouter()
@@ -39,21 +40,14 @@ export default function OnboardingPage() {
     setCodeError(null)
 
     try {
-      // Check if any profiles exist with this dating_pool
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('dating_pool')
-        .eq('dating_pool', eventCode)
-        .limit(1)
-
-      if (error) throw error
-
-      if (!data || data.length === 0) {
-        setCodeError('Invalid event code. Please check with your event organizer.')
+      const { isPoolCodeValid } = await import('@/app/actions/pool')
+      const trimmed = eventCode.trim()
+      const valid = await isPoolCodeValid(trimmed)
+      if (!valid) {
+        setCodeError('Invalid dating pool code. Please check with your event organizer.')
         return
       }
-
-      // Code is valid, proceed to profile creation
+      setEventCode(trimmed)
       setStep('profile')
     } catch (err: any) {
       setCodeError('An error occurred. Please try again.')
@@ -162,7 +156,7 @@ export default function OnboardingPage() {
 
       if (prefsError) throw prefsError
 
-      router.push('/swipe')
+      router.push('/')
     } catch (err: any) {
       setError(err.message || 'An error occurred')
     } finally {
@@ -173,24 +167,28 @@ export default function OnboardingPage() {
   // Event Code Step
   if (step === 'code') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 py-8 px-4">
+      <div className="min-h-screen bg-pink-500 py-8 px-4">
         <div className="max-w-md mx-auto bg-white rounded-2xl shadow-xl p-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Join Your Event</h1>
-          <p className="text-gray-600 mb-8">Enter your event code to get started</p>
+          <div className="flex justify-center mb-4">
+            <EightBallLogo size={64} />
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2 text-center">Pool</h1>
+          <p className="text-gray-600 mb-2 text-center">Meet people in your pool</p>
+          <p className="text-gray-600 mb-8 text-center">Enter your dating pool code to get started</p>
 
           <form onSubmit={handleEventCodeSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Event Code *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Dating Pool Code *</label>
               <input
                 type="text"
                 value={eventCode}
                 onChange={(e) => setEventCode(e.target.value)}
                 required
-                placeholder="Enter your event code"
+                placeholder="Enter your dating pool code"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none text-gray-900"
               />
               <p className="text-sm text-gray-500 mt-1">
-                You'll only be matched with people who have the same event code
+                You'll only be matched with people who have the same dating pool code
               </p>
             </div>
 
@@ -203,7 +201,7 @@ export default function OnboardingPage() {
             <button
               type="submit"
               disabled={validatingCode || !eventCode}
-              className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 rounded-lg font-semibold hover:from-pink-600 hover:to-purple-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-pink-500 text-white py-3 rounded-lg font-semibold hover:bg-pink-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {validatingCode ? 'Validating...' : 'Continue'}
             </button>
@@ -215,17 +213,17 @@ export default function OnboardingPage() {
 
   // Profile Creation Step
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 py-8 px-4">
+    <div className="min-h-screen bg-pink-500 py-8 px-4">
       <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-8">
         <div className="mb-8">
           <button
             onClick={() => setStep('code')}
             className="text-pink-500 hover:text-pink-600 mb-4 flex items-center gap-2"
           >
-            ← Back to event code
+            ← Back to dating pool code
           </button>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Your Profile</h1>
-          <p className="text-gray-600">Event: <span className="font-semibold">{eventCode}</span></p>
+          <p className="text-gray-600">Dating Pool: <span className="font-semibold">{eventCode}</span></p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -463,7 +461,7 @@ export default function OnboardingPage() {
           <button
             type="submit"
             disabled={loading || photos.length !== MAX_PHOTOS}
-            className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 rounded-lg font-semibold hover:from-pink-600 hover:to-purple-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-pink-500 text-white py-3 rounded-lg font-semibold hover:bg-pink-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Creating Profile...' : 'Start Swiping'}
           </button>

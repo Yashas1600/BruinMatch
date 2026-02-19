@@ -8,6 +8,7 @@ import { feetInchesToCm, cmToFeetInches, validateImageFile } from '@/lib/utils'
 import Header from '@/components/Header'
 import BottomNav from '@/components/BottomNav'
 import Image from 'next/image'
+import { deleteAccount } from '@/app/actions/account'
 
 export default function PreferencesPage() {
   const router = useRouter()
@@ -48,6 +49,9 @@ export default function PreferencesPage() {
   const [photos, setPhotos] = useState<File[]>([])
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([])
   const [existingPhotos, setExistingPhotos] = useState<string[]>([])
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleteAccountLoading, setDeleteAccountLoading] = useState(false)
+  const [deleteAccountError, setDeleteAccountError] = useState<string | null>(null)
 
   useEffect(() => {
     loadPreferences()
@@ -307,9 +311,27 @@ export default function PreferencesPage() {
     }
   }
 
+  const handleDeleteAccount = async () => {
+    setDeleteAccountError(null)
+    setDeleteAccountLoading(true)
+    try {
+      const result = await deleteAccount()
+      if (result.success) {
+        await supabase.auth.signOut()
+        router.push('/auth/login')
+        return
+      }
+      setDeleteAccountError(result.error || 'Failed to delete account')
+    } catch (err: any) {
+      setDeleteAccountError(err.message || 'An error occurred')
+    } finally {
+      setDeleteAccountLoading(false)
+    }
+  }
+
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 py-4 px-4 pb-24">
+      <div className="min-h-screen bg-pink-500 py-4 px-4 pb-24">
         <Header />
       <div className="max-w-2xl mx-auto mt-4">
         {/* Tab Buttons */}
@@ -319,7 +341,7 @@ export default function PreferencesPage() {
             onClick={() => setActiveTab('profile')}
             className={`flex-1 py-3 rounded-lg font-semibold transition ${
               activeTab === 'profile'
-                ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white'
+                ? 'bg-pink-500 text-white'
                 : 'bg-white text-gray-700 hover:bg-gray-50'
             }`}
           >
@@ -330,7 +352,7 @@ export default function PreferencesPage() {
             onClick={() => setActiveTab('preferences')}
             className={`flex-1 py-3 rounded-lg font-semibold transition ${
               activeTab === 'preferences'
-                ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white'
+                ? 'bg-pink-500 text-white'
                 : 'bg-white text-gray-700 hover:bg-gray-50'
             }`}
           >
@@ -341,7 +363,7 @@ export default function PreferencesPage() {
             onClick={() => setActiveTab('photos')}
             className={`flex-1 py-3 rounded-lg font-semibold transition ${
               activeTab === 'photos'
-                ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white'
+                ? 'bg-pink-500 text-white'
                 : 'bg-white text-gray-700 hover:bg-gray-50'
             }`}
           >
@@ -495,7 +517,7 @@ export default function PreferencesPage() {
             <button
               type="submit"
               disabled={profileLoading}
-              className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 rounded-lg font-semibold hover:from-pink-600 hover:to-purple-600 transition disabled:opacity-50 disabled:cursor-not-allowed mt-6"
+              className="w-full bg-pink-500 text-white py-3 rounded-lg font-semibold hover:bg-pink-600 transition disabled:opacity-50 disabled:cursor-not-allowed mt-6"
             >
               {profileLoading ? 'Updating...' : 'Update Profile'}
             </button>
@@ -579,7 +601,7 @@ export default function PreferencesPage() {
             <button
               type="submit"
               disabled={preferencesLoading}
-              className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 rounded-lg font-semibold hover:from-pink-600 hover:to-purple-600 transition disabled:opacity-50 disabled:cursor-not-allowed mt-6"
+              className="w-full bg-pink-500 text-white py-3 rounded-lg font-semibold hover:bg-pink-600 transition disabled:opacity-50 disabled:cursor-not-allowed mt-6"
             >
               {preferencesLoading ? 'Updating...' : 'Update Dating Preferences'}
             </button>
@@ -689,15 +711,68 @@ export default function PreferencesPage() {
               <button
                 type="submit"
                 disabled={photosLoading || (existingPhotos.length + photos.length !== MAX_PHOTOS)}
-                className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 rounded-lg font-semibold hover:from-pink-600 hover:to-purple-600 transition disabled:opacity-50 disabled:cursor-not-allowed mt-6"
+                className="w-full bg-pink-500 text-white py-3 rounded-lg font-semibold hover:bg-pink-600 transition disabled:opacity-50 disabled:cursor-not-allowed mt-6"
               >
                 {photosLoading ? 'Updating...' : 'Update Photos'}
               </button>
             </div>
           </form>
         )}
+
+        {/* Delete account */}
+        <div className="mt-8 bg-white rounded-2xl shadow-xl p-8">
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Delete account</h2>
+          <p className="text-gray-600 mb-4">
+            Permanently delete your profile, matches, and messages. This cannot be undone.
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowDeleteConfirm(true)}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition"
+          >
+            Delete my account
+          </button>
+        </div>
       </div>
       </div>
+
+      {/* Delete confirmation modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-8 max-w-sm w-full text-center">
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Delete account?</h3>
+            <p className="text-gray-600 mb-6">
+              Your profile, matches, and messages will be permanently removed. This cannot be undone.
+            </p>
+            {deleteAccountError && (
+              <div className="mb-4 p-3 bg-red-50 text-red-800 rounded-lg text-sm">
+                {deleteAccountError}
+              </div>
+            )}
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDeleteConfirm(false)
+                  setDeleteAccountError(null)
+                }}
+                disabled={deleteAccountLoading}
+                className="flex-1 py-3 rounded-lg font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteAccount}
+                disabled={deleteAccountLoading}
+                className="flex-1 py-3 rounded-lg font-semibold bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {deleteAccountLoading ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <BottomNav />
     </>

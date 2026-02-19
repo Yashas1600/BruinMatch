@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { setPoolStatus, type PoolStatus } from '@/app/actions/pool'
 
 interface Profile {
   id: string
@@ -16,9 +17,16 @@ interface Profile {
   matches: string[]
 }
 
+interface PoolConfig {
+  pool_code: string
+  status: string
+  signupCount: number
+}
+
 interface AdminDashboardClientProps {
   allProfiles: Profile[]
   datingPools: string[]
+  poolConfigs: PoolConfig[]
   totalUsers: number
   activeUsers: number
   finalizedUsers: number
@@ -32,6 +40,7 @@ type SortDirection = 'asc' | 'desc'
 export default function AdminDashboardClient({
   allProfiles,
   datingPools,
+  poolConfigs,
   totalUsers,
   activeUsers,
   finalizedUsers,
@@ -41,6 +50,14 @@ export default function AdminDashboardClient({
   const [selectedPool, setSelectedPool] = useState<string>('all')
   const [sortField, setSortField] = useState<SortField>('created_at')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
+  const [poolActionLoading, setPoolActionLoading] = useState<string | null>(null)
+
+  const handlePoolAction = async (poolCode: string, status: PoolStatus) => {
+    setPoolActionLoading(poolCode)
+    await setPoolStatus(poolCode, status)
+    setPoolActionLoading(null)
+    window.location.reload()
+  }
 
   // Filter profiles based on selected pool
   const filteredProfiles = selectedPool === 'all'
@@ -99,6 +116,61 @@ export default function AdminDashboardClient({
 
   return (
     <>
+      {/* Pool controls */}
+      {poolConfigs.length > 0 && (
+        <div className="bg-white rounded-lg shadow p-6 mb-8">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Pool controls</h2>
+          <p className="text-gray-600 text-sm mb-4">
+            Start the pool to open matching. Pause to hide new profiles and show a &quot;Matching
+            paused&quot; screen.
+          </p>
+          <div className="space-y-4">
+            {poolConfigs.map((pc) => (
+              <div
+                key={pc.pool_code}
+                className="flex flex-wrap items-center gap-4 p-4 border border-gray-200 rounded-lg"
+              >
+                <div>
+                  <span className="font-medium text-gray-900">{pc.pool_code}</span>
+                  <span className="ml-2 text-gray-500">
+                    ({pc.signupCount} signed up · {pc.status})
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  {pc.status === 'waiting' && (
+                    <button
+                      onClick={() => handlePoolAction(pc.pool_code, 'active')}
+                      disabled={poolActionLoading === pc.pool_code}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                    >
+                      {poolActionLoading === pc.pool_code ? '…' : 'Start pool'}
+                    </button>
+                  )}
+                  {pc.status === 'active' && (
+                    <button
+                      onClick={() => handlePoolAction(pc.pool_code, 'paused')}
+                      disabled={poolActionLoading === pc.pool_code}
+                      className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50"
+                    >
+                      {poolActionLoading === pc.pool_code ? '…' : 'Pause matching'}
+                    </button>
+                  )}
+                  {pc.status === 'paused' && (
+                    <button
+                      onClick={() => handlePoolAction(pc.pool_code, 'active')}
+                      disabled={poolActionLoading === pc.pool_code}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                    >
+                      {poolActionLoading === pc.pool_code ? '…' : 'Resume matching'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
         <div className="bg-white rounded-lg shadow p-6">

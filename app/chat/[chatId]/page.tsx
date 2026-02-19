@@ -135,7 +135,7 @@ export default function ChatPage() {
 
   if (!otherProfile) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 flex items-center justify-center">
+      <div className="min-h-screen bg-pink-500 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading chat...</p>
@@ -148,13 +148,13 @@ export default function ChatPage() {
 
   return (
     <>
-      <div className="h-screen bg-gradient-to-br from-pink-50 to-purple-50 flex flex-col pb-16">
+      <div className="h-screen bg-pink-500 flex flex-col pb-16">
       {/* Header */}
-      <div className="bg-white shadow-md px-4 py-3 flex items-center gap-4">
+      <div className="bg-pink-500 px-4 py-3 flex items-center gap-4">
         <Link href="/matches">
-          <button className="p-2 hover:bg-gray-100 rounded-full transition">
+          <button className="p-2 hover:bg-white/20 rounded-full transition">
             <svg
-              className="w-6 h-6 text-gray-600"
+              className="w-6 h-6 text-white"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -182,7 +182,7 @@ export default function ChatPage() {
           </div>
 
           <div className="flex-1">
-            <h2 className="font-semibold text-gray-900">{otherProfile.name}</h2>
+            <h2 className="font-semibold text-white">{otherProfile.name}</h2>
             {bothConfirmed ? (
               <p className="text-xs text-green-600 font-medium">✓ PFC Date Confirmed!</p>
             ) : otherConfirmed ? (
@@ -190,30 +190,18 @@ export default function ChatPage() {
             ) : userConfirmed ? (
               <p className="text-xs text-purple-600">Waiting for {otherProfile.name}...</p>
             ) : (
-              <p className="text-xs text-gray-500">{otherProfile.frat}</p>
+              <p className="text-xs text-white/70">{otherProfile.frat}</p>
             )}
           </div>
         </Link>
 
-        <button
-          onClick={async () => {
-            await supabase.auth.signOut()
-            router.push('/auth/login')
-          }}
-          className="p-2 hover:bg-gray-100 rounded-full transition"
-        >
+        <button className="p-2 hover:bg-white/20 rounded-full transition">
           <svg
-            className="w-6 h-6 text-gray-600"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+            className="w-6 h-6 text-white"
+            fill="currentColor"
+            viewBox="0 0 20 20"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-            />
+            <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
           </svg>
         </button>
       </div>
@@ -227,7 +215,7 @@ export default function ChatPage() {
               <div
                 className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${
                   isOwn
-                    ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white'
+                    ? 'bg-pink-500 text-white'
                     : 'bg-white text-gray-900'
                 }`}
               >
@@ -268,7 +256,7 @@ export default function ChatPage() {
               <button
                 onClick={handleConfirmDate}
                 disabled={confirming}
-                className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-6 py-2 rounded-full font-semibold hover:from-pink-600 hover:to-purple-600 transition disabled:opacity-50"
+                className="bg-pink-500 text-white px-6 py-2 rounded-full font-semibold hover:bg-pink-600 transition disabled:opacity-50"
               >
                 {confirming ? 'Confirming...' : 'Confirm PFC Date'}
               </button>
@@ -281,7 +269,7 @@ export default function ChatPage() {
               <button
                 onClick={handleConfirmDate}
                 disabled={confirming}
-                className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-6 py-2 rounded-full font-semibold hover:from-pink-600 hover:to-purple-600 transition disabled:opacity-50"
+                className="bg-pink-500 text-white px-6 py-2 rounded-full font-semibold hover:bg-pink-600 transition disabled:opacity-50"
               >
                 {confirming ? 'Confirming...' : 'Confirm PFC Date'}
               </button>
@@ -304,7 +292,7 @@ export default function ChatPage() {
           <button
             type="submit"
             disabled={sending || !newMessage.trim() || bothConfirmed}
-            className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-6 py-2 rounded-full font-semibold hover:from-pink-600 hover:to-purple-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-pink-500 text-white px-6 py-2 rounded-full font-semibold hover:bg-pink-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Send
           </button>

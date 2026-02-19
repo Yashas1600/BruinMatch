@@ -37,7 +37,7 @@ export default function AdminLoginPage() {
       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Admin Login</h1>
-          <p className="text-gray-600">PFC Match Dashboard Access</p>
+          <p className="text-gray-600">Pool Dashboard Access</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">

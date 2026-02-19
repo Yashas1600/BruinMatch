@@ -65,10 +65,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Redirect to swipe if authenticated and trying to access auth pages
+  // Redirect to home if authenticated and trying to access auth pages (home will redirect by pool status)
   if (user && request.nextUrl.pathname.startsWith('/auth')) {
     const url = request.nextUrl.clone()
-    url.pathname = '/swipe'
+    url.pathname = '/'
     return NextResponse.redirect(url)
   }
 

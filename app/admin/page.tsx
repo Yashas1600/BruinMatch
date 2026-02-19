@@ -87,6 +87,11 @@ async function getAdminStats() {
   // Get unique dating pools
   const datingPools = [...new Set(allProfiles?.map(p => p.dating_pool) || [])]
 
+  // Get pool config (status per pool)
+  const { data: poolConfigs } = await supabase
+    .from('pool_config')
+    .select('pool_code, status')
+
   return {
     totalUsers: totalUsers || 0,
     finalizedUsers: finalizedUsers || 0,
@@ -95,6 +100,10 @@ async function getAdminStats() {
     totalMessages: totalMessages || 0,
     allProfiles: profilesWithDetails,
     datingPools: datingPools,
+    poolConfigs: (poolConfigs || []).map(pc => ({
+      ...pc,
+      signupCount: allProfiles?.filter(p => p.dating_pool === pc.pool_code).length ?? 0,
+    })),
   }
 }
 
@@ -139,6 +148,7 @@ export default async function AdminDashboard() {
         <AdminDashboardClient
           allProfiles={stats.allProfiles}
           datingPools={stats.datingPools}
+          poolConfigs={stats.poolConfigs}
           totalUsers={stats.totalUsers}
           activeUsers={stats.activeUsers}
           finalizedUsers={stats.finalizedUsers}

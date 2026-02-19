@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import EightBallLogo from '@/components/EightBallLogo'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -42,11 +43,14 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 to-purple-50 px-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
+    <div className="min-h-screen flex items-center justify-center bg-white px-4">
+      <div className="max-w-md w-full bg-white p-8">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">PFC Match</h1>
-          <p className="text-gray-600">Find your perfect date for UCLA PFC Formal</p>
+          <div className="flex justify-center mb-4">
+            <EightBallLogo size={64} />
+          </div>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Pool</h1>
+          <p className="text-gray-600">Meet people in your pool</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">
@@ -80,7 +84,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 rounded-lg font-semibold hover:from-pink-600 hover:to-purple-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-pink-500 text-white py-3 rounded-lg font-semibold hover:bg-pink-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Sending...' : 'Send Magic Link'}
           </button>
