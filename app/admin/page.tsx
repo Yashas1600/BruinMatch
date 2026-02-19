@@ -85,7 +85,7 @@ async function getAdminStats() {
   }) || []
 
   // Get unique dating pools
-  const datingPools = [...new Set(allProfiles?.map(p => p.dating_pool) || [])]
+  const datingPools = Array.from(new Set(allProfiles?.map(p => p.dating_pool) || []))
 
   // Get pool config (status per pool)
   const { data: poolConfigs } = await supabase
