@@ -91,8 +91,6 @@ export default function SwipePage() {
     const newIndex = currentIndex + 1
     setCurrentIndex(newIndex)
 
-    // Only load more if we've actually run out and there might be more
-    // Don't reload while we still have candidates to show
     if (newIndex >= candidates.length && candidates.length >= 20) {
       loadCandidates()
     }
@@ -108,17 +106,17 @@ export default function SwipePage() {
   if (poolGate === 'paused') {
     return (
       <>
-        <div className="min-h-screen bg-pink-500 flex items-center justify-center px-4 pb-24">
-          <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
+        <div className="min-h-screen bg-background flex items-center justify-center px-6 pb-24">
+          <div className="max-w-sm w-full bg-white rounded-3xl shadow-card p-8 text-center">
             <div className="text-5xl mb-4">⏸</div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Matching has been paused</h1>
-            <p className="text-gray-600">
+            <h1 className="text-2xl font-bold text-foreground mb-2">Matching paused</h1>
+            <p className="text-muted text-sm leading-relaxed">
               New profiles aren&apos;t visible right now. Check back later—we&apos;ll resume
               matching soon.
             </p>
             <button
               onClick={() => window.location.reload()}
-              className="mt-6 text-pink-600 hover:text-pink-700 font-medium"
+              className="mt-6 text-primary-500 hover:text-primary-dark font-semibold text-sm"
             >
               Refresh
             </button>
@@ -132,10 +130,10 @@ export default function SwipePage() {
   if (loading) {
     return (
       <>
-        <div className="min-h-screen bg-pink-500 flex items-center justify-center pb-24">
+        <div className="min-h-screen bg-background flex items-center justify-center pb-24">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading profiles...</p>
+            <div className="w-10 h-10 border-2 border-primary-200 border-t-primary-500 rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-muted text-sm">Loading profiles...</p>
           </div>
         </div>
         <BottomNav />
@@ -146,11 +144,11 @@ export default function SwipePage() {
   if (!currentCandidate) {
     return (
       <>
-        <div className="min-h-screen bg-pink-500 flex items-center justify-center px-4 pb-24">
-          <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">No More Profiles</h2>
-            <p className="text-gray-600 mb-6">
-              You've seen everyone! Check back later or adjust your preferences.
+        <div className="min-h-screen bg-background flex items-center justify-center px-6 pb-24">
+          <div className="max-w-sm w-full bg-white rounded-3xl shadow-card p-8 text-center">
+            <h2 className="text-xl font-bold text-foreground mb-2">No More Profiles</h2>
+            <p className="text-muted text-sm mb-6 leading-relaxed">
+              You&apos;ve seen everyone! Check back later or adjust your preferences.
             </p>
             <div className="flex flex-col gap-3">
               <button
@@ -158,13 +156,13 @@ export default function SwipePage() {
                   setCurrentIndex(0)
                   loadCandidates(true)
                 }}
-                className="w-full bg-pink-500 text-white py-3 rounded-lg font-semibold hover:bg-pink-600 transition"
+                className="w-full bg-primary-500 text-white py-3 rounded-xl font-semibold hover:bg-primary-dark transition shadow-action"
               >
                 Review Skipped Profiles
               </button>
               <Link
                 href="/preferences"
-                className="w-full bg-gray-100 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-200 transition"
+                className="w-full bg-primary-50 text-primary-500 py-3 rounded-xl font-semibold hover:bg-primary-100 transition text-center"
               >
                 Update Preferences
               </Link>
@@ -180,14 +178,14 @@ export default function SwipePage() {
 
   return (
     <>
-      <div className="min-h-screen bg-pink-500 py-4 px-4 pb-24">
+      <div className="min-h-screen bg-background pt-4 px-4 pb-24">
         <Header />
 
-        {/* Card */}
         <div className="max-w-md mx-auto">
-          <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
+          {/* Profile Card */}
+          <div className="bg-white rounded-3xl shadow-card overflow-hidden">
             {/* Photo */}
-            <div className="relative aspect-[3/4] bg-gray-200">
+            <div className="relative aspect-[3/4] bg-gray-100">
               {photos[photoIndex] && (
                 <Image
                   src={photos[photoIndex]}
@@ -200,12 +198,12 @@ export default function SwipePage() {
 
               {/* Photo indicators */}
               {photos.length > 1 && (
-                <div className="absolute top-4 left-0 right-0 flex gap-2 px-4">
+                <div className="absolute top-3 left-0 right-0 flex gap-1.5 px-3">
                   {photos.map((_, idx) => (
                     <div
                       key={idx}
-                      className={`flex-1 h-1 rounded-full ${
-                        idx === photoIndex ? 'bg-white' : 'bg-white/40'
+                      className={`flex-1 h-0.5 rounded-full transition-all ${
+                        idx === photoIndex ? 'bg-white' : 'bg-white/30'
                       }`}
                     />
                   ))}
@@ -227,50 +225,44 @@ export default function SwipePage() {
               </div>
 
               {/* Info overlay */}
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-6 text-white">
-                <h2 className="text-3xl font-bold mb-1">
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent p-5 pt-16 text-white">
+                <h2 className="text-2xl font-bold mb-0.5">
                   {currentCandidate.name}, {currentCandidate.age}
                 </h2>
-                <p className="text-lg mb-1">{currentCandidate.frat}</p>
-                <p className="text-sm opacity-90">
+                <p className="text-sm opacity-90 mb-0.5">{currentCandidate.frat}</p>
+                <p className="text-xs opacity-70">
                   {cmToFeetInches(currentCandidate.height_cm)}
                 </p>
               </div>
             </div>
 
             {/* Bio */}
-            <div className="p-6">
-              <p className="text-gray-700 text-center">{currentCandidate.one_liner}</p>
-            </div>
+            {currentCandidate.one_liner && (
+              <div className="px-5 py-4">
+                <p className="text-foreground/70 text-sm text-center leading-relaxed">{currentCandidate.one_liner}</p>
+              </div>
+            )}
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-center items-center gap-8 mt-8 mb-8">
+          <div className="flex justify-center items-center gap-6 mt-6 mb-6">
             <button
               onClick={() => handleSwipe('pass')}
               disabled={swiping}
-              className="w-16 h-16 bg-white rounded-full shadow-lg hover:shadow-xl transition-all transform hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="w-14 h-14 bg-white rounded-full shadow-card hover:shadow-card-hover transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center border border-border"
             >
-              <svg className="w-8 h-8 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                  clipRule="evenodd"
-                />
+              <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
 
             <button
               onClick={() => handleSwipe('like')}
               disabled={swiping}
-              className="w-20 h-20 bg-pink-500 rounded-full shadow-lg hover:shadow-xl transition-all transform hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="w-16 h-16 bg-primary-500 rounded-full shadow-action hover:shadow-lg transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
-              <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
-                  clipRule="evenodd"
-                />
+              <svg className="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
               </svg>
             </button>
           </div>
@@ -281,17 +273,17 @@ export default function SwipePage() {
 
       {/* Match Modal */}
       {matchModal.show && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-8 max-w-sm w-full text-center">
-            <div className="text-6xl mb-4">🎉</div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">It's a Match!</h2>
-            <p className="text-gray-600 mb-6">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-6">
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-card">
+            <div className="text-5xl mb-4">🎉</div>
+            <h2 className="text-2xl font-bold text-foreground mb-1">It&apos;s a Match!</h2>
+            <p className="text-muted text-sm mb-6">
               You and {currentCandidate.name} liked each other!
             </p>
             <div className="flex flex-col gap-3">
               <button
                 onClick={() => router.push(`/chat/${matchModal.chatId}`)}
-                className="w-full bg-pink-500 text-white py-3 rounded-lg font-semibold hover:bg-pink-600 transition"
+                className="w-full bg-primary-500 text-white py-3 rounded-xl font-semibold hover:bg-primary-dark transition shadow-action"
               >
                 Send a Message
               </button>
@@ -299,7 +291,7 @@ export default function SwipePage() {
                 onClick={() => {
                   setMatchModal({ show: false })
                 }}
-                className="w-full bg-gray-100 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-200 transition"
+                className="w-full bg-primary-50 text-primary-500 py-3 rounded-xl font-semibold hover:bg-primary-100 transition"
               >
                 Keep Swiping
               </button>

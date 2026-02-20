@@ -11,34 +11,31 @@ export default function EightBallLogo({ size = 40, className = '' }: EightBallLo
       className={`relative ${className}`}
       style={{ width: size, height: size }}
     >
-      {/* Outer white circle */}
       <div 
-        className="absolute inset-0 rounded-full bg-white"
+        className="absolute inset-0 rounded-full bg-primary-500"
         style={{ width: size, height: size }}
       />
       
-      {/* Inner circle with background color (solid pink) */}
       <div 
-        className="absolute rounded-full bg-pink-500"
+        className="absolute rounded-full bg-white"
         style={{ 
-          width: size * 0.7, 
-          height: size * 0.7,
+          width: size * 0.55, 
+          height: size * 0.55,
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)'
         }}
       />
       
-      {/* Number 8 */}
       <div 
-        className="absolute text-white font-bold flex items-center justify-center"
+        className="absolute text-primary-500 font-black flex items-center justify-center"
         style={{ 
           width: size * 0.5, 
           height: size * 0.5,
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          fontSize: size * 0.35
+          fontSize: size * 0.3
         }}
       >
         8
@@ -46,4 +43,3 @@ export default function EightBallLogo({ size = 40, className = '' }: EightBallLo
     </div>
   )
 }
-

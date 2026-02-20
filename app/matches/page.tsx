@@ -34,10 +34,10 @@ export default function MatchesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-pink-500 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading matches...</p>
+          <div className="w-10 h-10 border-2 border-primary-200 border-t-primary-500 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted text-sm">Loading matches...</p>
         </div>
       </div>
     )
@@ -47,50 +47,53 @@ export default function MatchesPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-pink-500 py-4 px-4 pb-24">
-        <div className="max-w-md mx-auto mb-4 relative flex items-center justify-between px-4">
+      <div className="min-h-screen bg-background pt-4 px-4 pb-24">
+        {/* Page Header */}
+        <div className="max-w-md mx-auto mb-5 relative flex items-center justify-between px-1">
           <div></div>
-          <h1 className="text-xl font-bold text-white">Chat</h1>
-          <button className="p-2 hover:bg-white/20 rounded-full transition">
-            <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+          <h1 className="text-lg font-bold text-foreground tracking-tight">Matches</h1>
+          <button className="p-2 hover:bg-primary-50 rounded-full transition">
+            <svg className="w-5 h-5 text-foreground" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
             </svg>
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="max-w-2xl mx-auto mb-4 flex gap-2">
-          <button
-            onClick={() => setActiveTab('active')}
-            className={`flex-1 py-3 rounded-lg font-semibold transition ${
-              activeTab === 'active'
-                ? 'bg-pink-500 text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-50'
-            }`}
-          >
-            Active ({activeMatches.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('expired')}
-            className={`flex-1 py-3 rounded-lg font-semibold transition ${
-              activeTab === 'expired'
-                ? 'bg-pink-500 text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-50'
-            }`}
-          >
-            Expired ({expiredMatches.length})
-          </button>
+        <div className="max-w-md mx-auto mb-4">
+          <div className="bg-white rounded-2xl p-1 shadow-soft flex">
+            <button
+              onClick={() => setActiveTab('active')}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition ${
+                activeTab === 'active'
+                  ? 'bg-primary-500 text-white shadow-action'
+                  : 'text-muted hover:text-foreground'
+              }`}
+            >
+              Active ({activeMatches.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('expired')}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition ${
+                activeTab === 'expired'
+                  ? 'bg-primary-500 text-white shadow-action'
+                  : 'text-muted hover:text-foreground'
+              }`}
+            >
+              Expired ({expiredMatches.length})
+            </button>
+          </div>
         </div>
 
         {/* Matches List */}
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-md mx-auto">
           {displayMatches.length === 0 ? (
-            <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
-              <div className="text-6xl mb-4">{activeTab === 'active' ? '💔' : '⏰'}</div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            <div className="bg-white rounded-3xl shadow-card p-10 text-center">
+              <div className="text-5xl mb-4">{activeTab === 'active' ? '💔' : '⏰'}</div>
+              <h2 className="text-xl font-bold text-foreground mb-2">
                 {activeTab === 'active' ? 'No Active Matches' : 'No Expired Matches'}
               </h2>
-              <p className="text-gray-600 mb-6">
+              <p className="text-muted text-sm mb-6 leading-relaxed">
                 {activeTab === 'active'
                   ? 'Keep swiping to find your perfect PFC date!'
                   : 'No expired conversations yet.'}
@@ -98,7 +101,7 @@ export default function MatchesPage() {
               {activeTab === 'active' && (
                 <Link
                   href="/swipe"
-                  className="inline-block bg-pink-500 text-white px-8 py-3 rounded-lg font-semibold hover:bg-pink-600 transition"
+                  className="inline-block bg-primary-500 text-white px-8 py-3 rounded-xl font-semibold hover:bg-primary-dark transition shadow-action"
                 >
                   Start Swiping
                 </Link>
@@ -113,20 +116,19 @@ export default function MatchesPage() {
                 return (
                   <div
                     key={match.id}
-                    className={`bg-white rounded-2xl shadow-md p-4 ${
-                      isExpired ? 'opacity-60' : 'hover:shadow-lg'
+                    className={`bg-white rounded-2xl shadow-card p-4 ${
+                      isExpired ? 'opacity-50' : 'hover:shadow-card-hover'
                     } transition`}
                   >
                     {isExpired && (
-                      <div className="mb-2 px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded-full inline-block">
+                      <div className="mb-2 px-3 py-1 bg-gray-100 text-muted text-xs rounded-full inline-block font-medium">
                         {match.expiredReason}
                       </div>
                     )}
 
-                    <div className="flex items-center gap-4">
-                      {/* Profile Photo */}
+                    <div className="flex items-center gap-3">
                       <Link href={`/profile/${match.otherProfile.id}`}>
-                        <div className="relative w-16 h-16 flex-shrink-0 cursor-pointer hover:opacity-80 transition">
+                        <div className="relative w-14 h-14 flex-shrink-0 cursor-pointer hover:opacity-80 transition">
                           {photos[0] && (
                             <Image
                               src={photos[0]}
@@ -138,43 +140,40 @@ export default function MatchesPage() {
                         </div>
                       </Link>
 
-                      {/* Info */}
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-semibold text-gray-900">
+                        <h3 className="text-sm font-semibold text-foreground">
                           {match.otherProfile.name}, {match.otherProfile.age}
                         </h3>
                         {match.userConfirmed && (
-                          <p className="text-sm text-green-600">✓ You confirmed</p>
+                          <p className="text-xs text-emerald-500 font-medium">✓ You confirmed</p>
                         )}
                         {match.otherConfirmed && (
-                          <p className="text-sm text-green-600">✓ They confirmed</p>
+                          <p className="text-xs text-emerald-500 font-medium">✓ They confirmed</p>
                         )}
                       </div>
 
-                      {/* Time */}
-                      <div className="text-xs text-gray-400">
+                      <div className="text-[10px] text-muted">
                         {formatRelativeTime(match.created_at)}
                       </div>
                     </div>
 
-                    {/* Action buttons */}
                     <div className="flex gap-2 mt-3">
                       <Link
                         href={`/profile/${match.otherProfile.id}`}
-                        className="flex-1 py-2 text-center border-2 border-pink-500 text-pink-500 rounded-lg font-medium hover:bg-pink-50 transition"
+                        className="flex-1 py-2 text-center border border-primary-500 text-primary-500 rounded-xl text-sm font-medium hover:bg-primary-50 transition"
                       >
                         View Profile
                       </Link>
                       {!isExpired && (
                         <Link
                           href={`/chat/${match.chat?.id}`}
-                          className="flex-1 py-2 text-center bg-pink-500 text-white rounded-lg font-medium hover:bg-pink-600 transition"
+                          className="flex-1 py-2 text-center bg-primary-500 text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition"
                         >
                           Message
                         </Link>
                       )}
                       {isExpired && (
-                        <div className="flex-1 py-2 text-center bg-gray-300 text-gray-600 rounded-lg font-medium cursor-not-allowed">
+                        <div className="flex-1 py-2 text-center bg-gray-100 text-muted rounded-xl text-sm font-medium cursor-not-allowed">
                           Expired
                         </div>
                       )}

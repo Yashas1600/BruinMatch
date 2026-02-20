@@ -62,7 +62,6 @@ export default function PreferencesPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      // Load profile data
       const { data: profile } = await supabase
         .from('profiles')
         .select('*')
@@ -83,13 +82,11 @@ export default function PreferencesPage() {
           one_liner: profile.one_liner || '',
         })
 
-        // Load existing photos
         if (profile.photos) {
           setExistingPhotos(profile.photos as string[])
         }
       }
 
-      // Load preferences data
       const { data: preferences } = await supabase
         .from('preferences')
         .select('*')
@@ -114,7 +111,6 @@ export default function PreferencesPage() {
           interested_in: preferences.interested_in,
         })
       } else if (profile) {
-        // Default to profile's interested_in
         setPreferencesData(prev => ({ ...prev, interested_in: profile.interested_in }))
       }
     } catch (err) {
@@ -179,7 +175,6 @@ export default function PreferencesPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
-      // Use wide default ranges for age and height
       const prefsData = {
         user_id: user.id,
         frat_whitelist: preferencesData.frat_whitelist.length > 0 ? preferencesData.frat_whitelist : null,
@@ -224,7 +219,6 @@ export default function PreferencesPage() {
       return
     }
 
-    // Validate each file
     for (const file of files) {
       const validation = validateImageFile(file)
       if (!validation.valid) {
@@ -233,7 +227,6 @@ export default function PreferencesPage() {
       }
     }
 
-    // Create previews
     const newPreviews = files.map(file => URL.createObjectURL(file))
     setPhotos([...photos, ...files])
     setPhotoPreviews([...photoPreviews, ...newPreviews])
@@ -265,7 +258,6 @@ export default function PreferencesPage() {
         throw new Error(`Please have exactly ${MAX_PHOTOS} photos`)
       }
 
-      // Upload new photos to Supabase Storage
       const newPhotoUrls: string[] = []
       for (let i = 0; i < photos.length; i++) {
         const file = photos[i]
@@ -285,10 +277,8 @@ export default function PreferencesPage() {
         newPhotoUrls.push(publicUrl)
       }
 
-      // Combine existing and new photos
       const allPhotoUrls = [...existingPhotos, ...newPhotoUrls]
 
-      // Update profile with new photos array
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ photos: allPhotoUrls })
@@ -296,7 +286,6 @@ export default function PreferencesPage() {
 
       if (updateError) throw updateError
 
-      // Clear new photos and update existing
       setExistingPhotos(allPhotoUrls)
       setPhotos([])
       photoPreviews.forEach(url => URL.revokeObjectURL(url))
@@ -331,421 +320,404 @@ export default function PreferencesPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-pink-500 py-4 px-4 pb-24">
+      <div className="min-h-screen bg-background pt-4 px-4 pb-24">
         <Header />
-      <div className="max-w-2xl mx-auto mt-4">
-        {/* Tab Buttons */}
-        <div className="flex gap-2 mb-4">
-          <button
-            type="button"
-            onClick={() => setActiveTab('profile')}
-            className={`flex-1 py-3 rounded-lg font-semibold transition ${
-              activeTab === 'profile'
-                ? 'bg-pink-500 text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-50'
-            }`}
-          >
-            Profile Info
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('preferences')}
-            className={`flex-1 py-3 rounded-lg font-semibold transition ${
-              activeTab === 'preferences'
-                ? 'bg-pink-500 text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-50'
-            }`}
-          >
-            Dating Preferences
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('photos')}
-            className={`flex-1 py-3 rounded-lg font-semibold transition ${
-              activeTab === 'photos'
-                ? 'bg-pink-500 text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-50'
-            }`}
-          >
-            Photos
-          </button>
-        </div>
-
-        {/* Profile Information Section */}
-        {activeTab === 'profile' && (
-          <form onSubmit={handleProfileSubmit}>
-            <div className="bg-white rounded-2xl shadow-xl p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Profile Information</h2>
-            <p className="text-gray-600 mb-6">Update your personal details</p>
-
-            <div className="space-y-6">
-              {/* Name */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Name *</label>
-                <input
-                  type="text"
-                  value={profileData.name}
-                  onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none text-gray-900"
-                />
-              </div>
-
-              {/* Age */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Age *</label>
-                <input
-                  type="number"
-                  min="18"
-                  max="100"
-                  value={profileData.age}
-                  onChange={(e) => setProfileData({ ...profileData, age: e.target.value })}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none text-gray-900"
-                />
-              </div>
-
-              {/* Gender */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">I am a: *</label>
-                <div className="flex gap-4">
-                  <button
-                    type="button"
-                    onClick={() => setProfileData({ ...profileData, gender: 'men' })}
-                    className={`flex-1 py-3 rounded-lg font-medium transition ${
-                      profileData.gender === 'men'
-                        ? 'bg-pink-500 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    Man
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setProfileData({ ...profileData, gender: 'women' })}
-                    className={`flex-1 py-3 rounded-lg font-medium transition ${
-                      profileData.gender === 'women'
-                        ? 'bg-pink-500 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    Woman
-                  </button>
-                </div>
-              </div>
-
-              {/* Frat/Sorority */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Fraternity/Sorority *
-                </label>
-                <select
-                  value={profileData.frat}
-                  onChange={(e) => setProfileData({ ...profileData, frat: e.target.value })}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none text-gray-900"
-                >
-                  <option value="">Select...</option>
-                  {UCLA_FRATS_SORORITIES.map((frat) => (
-                    <option key={frat} value={frat}>
-                      {frat}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Height */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Height *</label>
-                <div className="flex gap-4">
-                  <input
-                    type="number"
-                    min="4"
-                    max="7"
-                    placeholder="Feet"
-                    value={profileData.heightFeet}
-                    onChange={(e) => setProfileData({ ...profileData, heightFeet: e.target.value })}
-                    required
-                    className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none text-gray-900"
-                  />
-                  <input
-                    type="number"
-                    min="0"
-                    max="11"
-                    placeholder="Inches"
-                    value={profileData.heightInches}
-                    onChange={(e) => setProfileData({ ...profileData, heightInches: e.target.value })}
-                    required
-                    className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none text-gray-900"
-                  />
-                </div>
-              </div>
-
-              {/* One-liner */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  One-liner Bio * (max 200 characters)
-                </label>
-                <textarea
-                  value={profileData.one_liner}
-                  onChange={(e) => setProfileData({ ...profileData, one_liner: e.target.value })}
-                  maxLength={200}
-                  rows={3}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none resize-none text-gray-900"
-                  placeholder="Tell us something interesting about yourself..."
-                />
-                <p className="text-sm text-gray-500 mt-1">
-                  {profileData.one_liner.length}/200 characters
-                </p>
-              </div>
-            </div>
-
-            {/* Profile messages and submit */}
-            {profileSuccess && (
-              <div className="p-4 bg-green-50 text-green-800 rounded-lg border border-green-200 mt-6">
-                {profileSuccess}
-              </div>
-            )}
-
-            {profileError && (
-              <div className="p-4 bg-red-50 text-red-800 rounded-lg border border-red-200 mt-6">
-                {profileError}
-              </div>
-            )}
-
+        <div className="max-w-md mx-auto mt-2">
+          {/* Tab Buttons */}
+          <div className="bg-white rounded-2xl p-1 shadow-soft flex mb-4">
             <button
-              type="submit"
-              disabled={profileLoading}
-              className="w-full bg-pink-500 text-white py-3 rounded-lg font-semibold hover:bg-pink-600 transition disabled:opacity-50 disabled:cursor-not-allowed mt-6"
+              type="button"
+              onClick={() => setActiveTab('profile')}
+              className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition ${
+                activeTab === 'profile'
+                  ? 'bg-primary-500 text-white shadow-action'
+                  : 'text-muted hover:text-foreground'
+              }`}
             >
-              {profileLoading ? 'Updating...' : 'Update Profile'}
+              Profile
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('preferences')}
+              className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition ${
+                activeTab === 'preferences'
+                  ? 'bg-primary-500 text-white shadow-action'
+                  : 'text-muted hover:text-foreground'
+              }`}
+            >
+              Preferences
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('photos')}
+              className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition ${
+                activeTab === 'photos'
+                  ? 'bg-primary-500 text-white shadow-action'
+                  : 'text-muted hover:text-foreground'
+              }`}
+            >
+              Photos
             </button>
           </div>
-        </form>
-        )}
 
-        {/* Dating Preferences Section */}
-        {activeTab === 'preferences' && (
-          <form onSubmit={handlePreferencesSubmit}>
-            <div className="bg-white rounded-2xl shadow-xl p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Dating Preferences</h2>
-            <p className="text-gray-600 mb-6">Tell us who you're looking to meet</p>
+          {/* Profile Information Section */}
+          {activeTab === 'profile' && (
+            <form onSubmit={handleProfileSubmit}>
+              <div className="bg-white rounded-3xl shadow-card p-6">
+                <h2 className="text-lg font-bold text-foreground mb-1">Profile Information</h2>
+                <p className="text-muted text-xs mb-5">Update your personal details</p>
 
-            <div className="space-y-6">
-              {/* Interested In */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Looking For *
-                </label>
-                <div className="flex gap-4">
-                  {GENDER_OPTIONS.map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() =>
-                        setPreferencesData({ ...preferencesData, interested_in: option.value as any })
-                      }
-                      className={`flex-1 py-3 rounded-lg font-medium transition ${
-                        preferencesData.interested_in === option.value
-                          ? 'bg-pink-500 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Frat Whitelist */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Fraternity/Sorority Preferences (Optional)
-                </label>
-                <p className="text-sm text-gray-500 mb-3">
-                  Leave empty to see everyone, or select specific ones
-                </p>
-                <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto p-2 border border-gray-200 rounded-lg">
-                  {UCLA_FRATS_SORORITIES.map((frat) => (
-                    <button
-                      key={frat}
-                      type="button"
-                      onClick={() => toggleFrat(frat)}
-                      className={`py-2 px-3 rounded-lg text-sm font-medium transition ${
-                        preferencesData.frat_whitelist.includes(frat)
-                          ? 'bg-pink-500 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                    >
-                      {frat}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Preferences messages and submit */}
-            {preferencesSuccess && (
-              <div className="p-4 bg-green-50 text-green-800 rounded-lg border border-green-200 mt-6">
-                {preferencesSuccess}
-              </div>
-            )}
-
-            {preferencesError && (
-              <div className="p-4 bg-red-50 text-red-800 rounded-lg border border-red-200 mt-6">
-                {preferencesError}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={preferencesLoading}
-              className="w-full bg-pink-500 text-white py-3 rounded-lg font-semibold hover:bg-pink-600 transition disabled:opacity-50 disabled:cursor-not-allowed mt-6"
-            >
-              {preferencesLoading ? 'Updating...' : 'Update Dating Preferences'}
-            </button>
-          </div>
-        </form>
-        )}
-
-        {/* Photos Section */}
-        {activeTab === 'photos' && (
-          <form onSubmit={handlePhotosSubmit}>
-            <div className="bg-white rounded-2xl shadow-xl p-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Update Photos</h2>
-              <p className="text-gray-600 mb-6">Manage your profile photos ({existingPhotos.length + photos.length}/{MAX_PHOTOS})</p>
-
-              <div className="space-y-6">
-                {/* Existing Photos */}
-                {existingPhotos.length > 0 && (
+                <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Current Photos
-                    </label>
-                    <div className="grid grid-cols-3 gap-4">
-                      {existingPhotos.map((photo, index) => (
-                        <div key={index} className="relative aspect-square">
-                          <Image
-                            src={photo}
-                            alt={`Photo ${index + 1}`}
-                            fill
-                            className="object-cover rounded-lg"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeExistingPhoto(index)}
-                            className="absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center hover:bg-red-600"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ))}
+                    <label className="block text-xs font-semibold text-foreground/70 mb-1.5 uppercase tracking-wide">Name *</label>
+                    <input
+                      type="text"
+                      value={profileData.name}
+                      onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
+                      required
+                      className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none text-foreground text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground/70 mb-1.5 uppercase tracking-wide">Age *</label>
+                    <input
+                      type="number"
+                      min="18"
+                      max="100"
+                      value={profileData.age}
+                      onChange={(e) => setProfileData({ ...profileData, age: e.target.value })}
+                      required
+                      className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none text-foreground text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground/70 mb-1.5 uppercase tracking-wide">I am a *</label>
+                    <div className="flex gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setProfileData({ ...profileData, gender: 'men' })}
+                        className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition ${
+                          profileData.gender === 'men'
+                            ? 'bg-primary-500 text-white'
+                            : 'bg-background text-muted border border-border hover:border-primary-200'
+                        }`}
+                      >
+                        Man
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setProfileData({ ...profileData, gender: 'women' })}
+                        className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition ${
+                          profileData.gender === 'women'
+                            ? 'bg-primary-500 text-white'
+                            : 'bg-background text-muted border border-border hover:border-primary-200'
+                        }`}
+                      >
+                        Woman
+                      </button>
                     </div>
                   </div>
-                )}
 
-                {/* New Photos */}
-                {photos.length > 0 && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      New Photos (not saved yet)
+                    <label className="block text-xs font-semibold text-foreground/70 mb-1.5 uppercase tracking-wide">
+                      Fraternity/Sorority *
                     </label>
-                    <div className="grid grid-cols-3 gap-4">
-                      {photoPreviews.map((preview, index) => (
-                        <div key={index} className="relative aspect-square">
-                          <Image
-                            src={preview}
-                            alt={`New photo ${index + 1}`}
-                            fill
-                            className="object-cover rounded-lg"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeNewPhoto(index)}
-                            className="absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center hover:bg-red-600"
-                          >
-                            ×
-                          </button>
-                        </div>
+                    <select
+                      value={profileData.frat}
+                      onChange={(e) => setProfileData({ ...profileData, frat: e.target.value })}
+                      required
+                      className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none text-foreground text-sm"
+                    >
+                      <option value="">Select...</option>
+                      {UCLA_FRATS_SORORITIES.map((frat) => (
+                        <option key={frat} value={frat}>
+                          {frat}
+                        </option>
                       ))}
-                    </div>
+                    </select>
                   </div>
-                )}
 
-                {/* Upload New Photos */}
-                {existingPhotos.length + photos.length < MAX_PHOTOS && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Add More Photos
-                    </label>
-                    <label className="block w-full py-4 border-2 border-dashed border-gray-300 rounded-lg text-center cursor-pointer hover:border-pink-500 transition">
-                      <span className="text-gray-600">
-                        Click to upload ({existingPhotos.length + photos.length}/{MAX_PHOTOS})
-                      </span>
+                    <label className="block text-xs font-semibold text-foreground/70 mb-1.5 uppercase tracking-wide">Height *</label>
+                    <div className="flex gap-3">
                       <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        onChange={handlePhotoChange}
-                        className="hidden"
+                        type="number"
+                        min="4"
+                        max="7"
+                        placeholder="Feet"
+                        value={profileData.heightFeet}
+                        onChange={(e) => setProfileData({ ...profileData, heightFeet: e.target.value })}
+                        required
+                        className="flex-1 px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none text-foreground text-sm"
                       />
+                      <input
+                        type="number"
+                        min="0"
+                        max="11"
+                        placeholder="Inches"
+                        value={profileData.heightInches}
+                        onChange={(e) => setProfileData({ ...profileData, heightInches: e.target.value })}
+                        required
+                        className="flex-1 px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none text-foreground text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground/70 mb-1.5 uppercase tracking-wide">
+                      Bio (max 200 characters) *
                     </label>
+                    <textarea
+                      value={profileData.one_liner}
+                      onChange={(e) => setProfileData({ ...profileData, one_liner: e.target.value })}
+                      maxLength={200}
+                      rows={3}
+                      required
+                      className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none resize-none text-foreground text-sm"
+                      placeholder="Tell us something interesting about yourself..."
+                    />
+                    <p className="text-[10px] text-muted mt-1">
+                      {profileData.one_liner.length}/200
+                    </p>
+                  </div>
+                </div>
+
+                {profileSuccess && (
+                  <div className="p-3 bg-emerald-50 text-emerald-700 rounded-xl border border-emerald-100 mt-5 text-sm">
+                    {profileSuccess}
                   </div>
                 )}
+
+                {profileError && (
+                  <div className="p-3 bg-red-50 text-red-600 rounded-xl border border-red-100 mt-5 text-sm">
+                    {profileError}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={profileLoading}
+                  className="w-full bg-primary-500 text-white py-3 rounded-xl font-semibold hover:bg-primary-dark transition disabled:opacity-50 disabled:cursor-not-allowed mt-5 shadow-action text-sm"
+                >
+                  {profileLoading ? 'Updating...' : 'Update Profile'}
+                </button>
               </div>
+            </form>
+          )}
 
-              {/* Photos messages and submit */}
-              {photosSuccess && (
-                <div className="p-4 bg-green-50 text-green-800 rounded-lg border border-green-200 mt-6">
-                  {photosSuccess}
+          {/* Dating Preferences Section */}
+          {activeTab === 'preferences' && (
+            <form onSubmit={handlePreferencesSubmit}>
+              <div className="bg-white rounded-3xl shadow-card p-6">
+                <h2 className="text-lg font-bold text-foreground mb-1">Dating Preferences</h2>
+                <p className="text-muted text-xs mb-5">Tell us who you&apos;re looking to meet</p>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground/70 mb-1.5 uppercase tracking-wide">
+                      Looking For *
+                    </label>
+                    <div className="flex gap-3">
+                      {GENDER_OPTIONS.map((option) => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() =>
+                            setPreferencesData({ ...preferencesData, interested_in: option.value as any })
+                          }
+                          className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition ${
+                            preferencesData.interested_in === option.value
+                              ? 'bg-primary-500 text-white'
+                              : 'bg-background text-muted border border-border hover:border-primary-200'
+                          }`}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground/70 mb-1.5 uppercase tracking-wide">
+                      Frat/Sorority Preferences
+                    </label>
+                    <p className="text-[10px] text-muted mb-2">
+                      Leave empty to see everyone, or select specific ones
+                    </p>
+                    <div className="grid grid-cols-2 gap-1.5 max-h-60 overflow-y-auto p-2 border border-border rounded-xl bg-background">
+                      {UCLA_FRATS_SORORITIES.map((frat) => (
+                        <button
+                          key={frat}
+                          type="button"
+                          onClick={() => toggleFrat(frat)}
+                          className={`py-2 px-2 rounded-lg text-xs font-medium transition ${
+                            preferencesData.frat_whitelist.includes(frat)
+                              ? 'bg-primary-500 text-white'
+                              : 'bg-white text-muted hover:text-foreground hover:border-primary-200 border border-transparent'
+                          }`}
+                        >
+                          {frat}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              )}
 
-              {photosError && (
-                <div className="p-4 bg-red-50 text-red-800 rounded-lg border border-red-200 mt-6">
-                  {photosError}
+                {preferencesSuccess && (
+                  <div className="p-3 bg-emerald-50 text-emerald-700 rounded-xl border border-emerald-100 mt-5 text-sm">
+                    {preferencesSuccess}
+                  </div>
+                )}
+
+                {preferencesError && (
+                  <div className="p-3 bg-red-50 text-red-600 rounded-xl border border-red-100 mt-5 text-sm">
+                    {preferencesError}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={preferencesLoading}
+                  className="w-full bg-primary-500 text-white py-3 rounded-xl font-semibold hover:bg-primary-dark transition disabled:opacity-50 disabled:cursor-not-allowed mt-5 shadow-action text-sm"
+                >
+                  {preferencesLoading ? 'Updating...' : 'Update Preferences'}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* Photos Section */}
+          {activeTab === 'photos' && (
+            <form onSubmit={handlePhotosSubmit}>
+              <div className="bg-white rounded-3xl shadow-card p-6">
+                <h2 className="text-lg font-bold text-foreground mb-1">Update Photos</h2>
+                <p className="text-muted text-xs mb-5">Manage your profile photos ({existingPhotos.length + photos.length}/{MAX_PHOTOS})</p>
+
+                <div className="space-y-4">
+                  {existingPhotos.length > 0 && (
+                    <div>
+                      <label className="block text-xs font-semibold text-foreground/70 mb-1.5 uppercase tracking-wide">
+                        Current Photos
+                      </label>
+                      <div className="grid grid-cols-3 gap-3">
+                        {existingPhotos.map((photo, index) => (
+                          <div key={index} className="relative aspect-square">
+                            <Image
+                              src={photo}
+                              alt={`Photo ${index + 1}`}
+                              fill
+                              className="object-cover rounded-xl"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeExistingPhoto(index)}
+                              className="absolute -top-1.5 -right-1.5 bg-primary-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs hover:bg-primary-dark"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {photos.length > 0 && (
+                    <div>
+                      <label className="block text-xs font-semibold text-foreground/70 mb-1.5 uppercase tracking-wide">
+                        New Photos (not saved yet)
+                      </label>
+                      <div className="grid grid-cols-3 gap-3">
+                        {photoPreviews.map((preview, index) => (
+                          <div key={index} className="relative aspect-square">
+                            <Image
+                              src={preview}
+                              alt={`New photo ${index + 1}`}
+                              fill
+                              className="object-cover rounded-xl"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeNewPhoto(index)}
+                              className="absolute -top-1.5 -right-1.5 bg-primary-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs hover:bg-primary-dark"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {existingPhotos.length + photos.length < MAX_PHOTOS && (
+                    <div>
+                      <label className="block w-full py-6 border-2 border-dashed border-border rounded-xl text-center cursor-pointer hover:border-primary-300 transition bg-background">
+                        <span className="text-muted text-sm">
+                          Click to upload ({existingPhotos.length + photos.length}/{MAX_PHOTOS})
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={handlePhotoChange}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+                  )}
                 </div>
-              )}
 
-              <button
-                type="submit"
-                disabled={photosLoading || (existingPhotos.length + photos.length !== MAX_PHOTOS)}
-                className="w-full bg-pink-500 text-white py-3 rounded-lg font-semibold hover:bg-pink-600 transition disabled:opacity-50 disabled:cursor-not-allowed mt-6"
-              >
-                {photosLoading ? 'Updating...' : 'Update Photos'}
-              </button>
-            </div>
-          </form>
-        )}
+                {photosSuccess && (
+                  <div className="p-3 bg-emerald-50 text-emerald-700 rounded-xl border border-emerald-100 mt-5 text-sm">
+                    {photosSuccess}
+                  </div>
+                )}
 
-        {/* Delete account */}
-        <div className="mt-8 bg-white rounded-2xl shadow-xl p-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Delete account</h2>
-          <p className="text-gray-600 mb-4">
-            Permanently delete your profile, matches, and messages. This cannot be undone.
-          </p>
-          <button
-            type="button"
-            onClick={() => setShowDeleteConfirm(true)}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition"
-          >
-            Delete my account
-          </button>
+                {photosError && (
+                  <div className="p-3 bg-red-50 text-red-600 rounded-xl border border-red-100 mt-5 text-sm">
+                    {photosError}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={photosLoading || (existingPhotos.length + photos.length !== MAX_PHOTOS)}
+                  className="w-full bg-primary-500 text-white py-3 rounded-xl font-semibold hover:bg-primary-dark transition disabled:opacity-50 disabled:cursor-not-allowed mt-5 shadow-action text-sm"
+                >
+                  {photosLoading ? 'Updating...' : 'Update Photos'}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* Delete account */}
+          <div className="mt-6 bg-white rounded-3xl shadow-card p-6">
+            <h2 className="text-sm font-bold text-foreground mb-1">Delete Account</h2>
+            <p className="text-muted text-xs mb-4 leading-relaxed">
+              Permanently delete your profile, matches, and messages. This cannot be undone.
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowDeleteConfirm(true)}
+              className="px-4 py-2 bg-red-50 text-red-500 rounded-xl text-sm font-medium hover:bg-red-100 transition"
+            >
+              Delete my account
+            </button>
+          </div>
         </div>
-      </div>
       </div>
 
       {/* Delete confirmation modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-8 max-w-sm w-full text-center">
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Delete account?</h3>
-            <p className="text-gray-600 mb-6">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-6">
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-card">
+            <h3 className="text-lg font-bold text-foreground mb-2">Delete account?</h3>
+            <p className="text-muted text-sm mb-6 leading-relaxed">
               Your profile, matches, and messages will be permanently removed. This cannot be undone.
             </p>
             {deleteAccountError && (
-              <div className="mb-4 p-3 bg-red-50 text-red-800 rounded-lg text-sm">
+              <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-xl text-xs">
                 {deleteAccountError}
               </div>
             )}
@@ -757,7 +729,7 @@ export default function PreferencesPage() {
                   setDeleteAccountError(null)
                 }}
                 disabled={deleteAccountLoading}
-                className="flex-1 py-3 rounded-lg font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50"
+                className="flex-1 py-3 rounded-xl font-semibold bg-background text-muted hover:text-foreground disabled:opacity-50 text-sm border border-border"
               >
                 Cancel
               </button>
@@ -765,7 +737,7 @@ export default function PreferencesPage() {
                 type="button"
                 onClick={handleDeleteAccount}
                 disabled={deleteAccountLoading}
-                className="flex-1 py-3 rounded-lg font-semibold bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                className="flex-1 py-3 rounded-xl font-semibold bg-red-500 text-white hover:bg-red-600 disabled:opacity-50 text-sm"
               >
                 {deleteAccountLoading ? 'Deleting...' : 'Delete'}
               </button>
