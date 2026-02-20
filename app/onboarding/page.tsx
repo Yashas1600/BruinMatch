@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { UCLA_FRATS_SORORITIES, GENDER_OPTIONS, MAX_PHOTOS } from '@/lib/constants'
@@ -16,6 +16,11 @@ export default function OnboardingPage() {
   const [poolCode, setPoolCode] = useState('')
   const [codeError, setCodeError] = useState<string | null>(null)
   const [validatingCode, setValidatingCode] = useState(false)
+
+  // Ensure code step is shown first when pool code isn't set (e.g. direct nav or hydration)
+  useEffect(() => {
+    if (step === 'profile' && !poolCode) setStep('code')
+  }, [step, poolCode])
 
   const [formData, setFormData] = useState({
     name: '',

@@ -37,8 +37,11 @@ export async function GET(request: Request) {
       // Profile exists but no preferences - redirect to preferences
       return NextResponse.redirect(`${origin}/preferences`)
     }
+
+    // Existing user with profile + preferences - send to home so it can redirect by pool status (waiting / paused / swipe)
+    return NextResponse.redirect(`${origin}/`)
   }
 
-  // Existing user with complete profile - redirect to swipe
-  return NextResponse.redirect(`${origin}/swipe`)
+  // Not logged in - go to login
+  return NextResponse.redirect(`${origin}/auth/login`)
 }
