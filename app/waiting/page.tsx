@@ -24,7 +24,7 @@ export default async function WaitingPage() {
   if (status === 'paused') redirect('/paused')
 
   return (
-    <div className="min-h-screen bg-pink-500 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-blush-500 flex items-center justify-center px-4">
       <WaitingClient signupCount={count} poolCode={profile.dating_pool} />
     </div>
   )
