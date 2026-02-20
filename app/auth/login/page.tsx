@@ -12,14 +12,27 @@ export default function LoginPage() {
   const router = useRouter()
   const supabase = createClient()
 
+  const validateUCLAEmail = (value: string): string | null => {
+    const lower = value.trim().toLowerCase()
+    if (lower.endsWith('@g.ucla.edu') || lower.endsWith('@ucla.edu')) return null
+    return "That's not a UCLA email :) Try yourname@ucla.edu"
+  }
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
     setMessage(null)
+
+    const validationError = validateUCLAEmail(email)
+    if (validationError) {
+      setMessage({ type: 'error', text: validationError })
+      return
+    }
+
+    setLoading(true)
 
     try {
       const { error } = await supabase.auth.signInWithOtp({
-        email,
+        email: email.trim().toLowerCase(),
         options: {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
@@ -63,7 +76,7 @@ export default function LoginPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="your-email@ucla.edu"
+              placeholder="yourname@ucla.edu"
               required
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none transition text-gray-900"
             />
