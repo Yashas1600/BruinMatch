@@ -45,26 +45,19 @@ export async function getPoolStatusForCurrentUser(): Promise<{
   return { status, poolCode: profile.dating_pool }
 }
 
-// Fallback pool code that always works (e.g. if pool_config table not set up yet)
-const FALLBACK_POOL_CODE = 'POOLPFC26Y'
-
-/** For onboarding: is this pool code valid? (in pool_config OR at least one profile has it). Case-insensitive. */
+/** For onboarding: is this pool code valid? Must exist in pool_config. Case-insensitive. */
 export async function isPoolCodeValid(poolCode: string): Promise<boolean> {
-  const normalized = poolCode.trim().toUpperCase()
+  const normalized = poolCode.trim().toLowerCase()
   if (!normalized) return false
-  if (normalized === FALLBACK_POOL_CODE) return true
   const supabase = await createClient()
-  const { data: config, error: configError } = await supabase
-    .from('pool_config')
-    .select('pool_code')
-    .eq('pool_code', normalized)
-    .single()
-  if (!configError && config) return true
-  const { count } = await supabase
-    .from('profiles')
-    .select('*', { count: 'exact', head: true })
-    .ilike('dating_pool', normalized)
-  return (count ?? 0) > 0
+  const { data: configs } = await supabase.from('pool_config').select('pool_code')
+  const validCodes = new Set((configs ?? []).map((c) => c.pool_code.toLowerCase()))
+  return validCodes.has(normalized)
+}
+
+/** Normalize pool code for storage (lowercase). */
+export function normalizePoolCode(poolCode: string): string {
+  return poolCode.trim().toLowerCase()
 }
 
 /** Admin only: set pool status. Uses service role so it can update pool_config. */

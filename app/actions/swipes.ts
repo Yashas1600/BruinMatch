@@ -14,6 +14,21 @@ export async function swipe(swipeeId: string, decision: 'like' | 'pass') {
   }
 
   try {
+    // Ensure swipee is in the same pool (only same-pool users can match)
+    const { data: swiperProfile } = await supabase
+      .from('profiles')
+      .select('dating_pool')
+      .eq('id', user.id)
+      .single()
+    const { data: swipeeProfile } = await supabase
+      .from('profiles')
+      .select('dating_pool')
+      .eq('id', swipeeId)
+      .single()
+    if (!swiperProfile || !swipeeProfile || swiperProfile.dating_pool !== swipeeProfile.dating_pool) {
+      return { success: false, error: 'Cannot interact with users from a different pool' }
+    }
+
     // Check if a swipe already exists
     const { data: existingSwipe } = await supabase
       .from('swipes')

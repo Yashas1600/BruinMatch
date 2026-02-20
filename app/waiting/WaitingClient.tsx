@@ -30,7 +30,7 @@ export default function WaitingClient({
     <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
       <h1 className="text-3xl font-bold text-gray-900 mb-2">You&apos;re in the pool</h1>
       <p className="text-gray-600 mb-6">
-        Matching hasn&apos;t started yet. We&apos;ll open it soon!
+        The admin has not started your pool yet. You&apos;ll be able to match once they turn it on.
       </p>
       <div className="bg-pink-50 rounded-xl p-6 mb-6">
         <p className="text-5xl font-bold text-pink-600">{count}</p>
@@ -39,8 +39,8 @@ export default function WaitingClient({
         </p>
       </div>
       <p className="text-sm text-gray-500">
-        This page updates every few seconds. When the pool opens, you&apos;ll be able to start
-        matching.
+        This page updates every few seconds. When the admin starts your pool, you&apos;ll be able to
+        start matching.
       </p>
       <Link
         href="/waiting"

@@ -12,6 +12,11 @@ export default function OnboardingPage() {
   const router = useRouter()
   const supabase = createClient()
 
+  const [step, setStep] = useState<'code' | 'profile'>('code')
+  const [poolCode, setPoolCode] = useState('')
+  const [codeError, setCodeError] = useState<string | null>(null)
+  const [validatingCode, setValidatingCode] = useState(false)
+
   const [formData, setFormData] = useState({
     name: '',
     age: '',
@@ -28,6 +33,27 @@ export default function OnboardingPage() {
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const handlePoolCodeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setValidatingCode(true)
+    setCodeError(null)
+    try {
+      const { isPoolCodeValid, normalizePoolCode } = await import('@/app/actions/pool')
+      const trimmed = poolCode.trim()
+      const valid = await isPoolCodeValid(trimmed)
+      if (!valid) {
+        setCodeError('Invalid pool code. Check with your organizer or try again.')
+        return
+      }
+      setPoolCode(normalizePoolCode(trimmed))
+      setStep('profile')
+    } catch (err: any) {
+      setCodeError('Something went wrong. Please try again.')
+    } finally {
+      setValidatingCode(false)
+    }
+  }
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
@@ -111,7 +137,7 @@ export default function OnboardingPage() {
         interested_in: formData.interested_in,
         one_liner: formData.one_liner,
         photos: photoUrls,
-        dating_pool: 'POOLPFC26Y',
+        dating_pool: poolCode.trim().toLowerCase(),
       })
 
       if (profileError) throw profileError
@@ -137,15 +163,64 @@ export default function OnboardingPage() {
     }
   }
 
+  // Pool code step
+  if (step === 'code') {
+    return (
+      <div className="min-h-screen bg-pink-500 py-8 px-4">
+        <div className="max-w-md mx-auto bg-white rounded-2xl shadow-xl p-8">
+          <div className="flex justify-center mb-4">
+            <EightBallLogo size={64} />
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2 text-center">Join a pool</h1>
+          <p className="text-gray-600 mb-6 text-center">
+            Enter your pool code. You’ll only see and match with people in the same pool.
+          </p>
+          <form onSubmit={handlePoolCodeSubmit} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Pool code</label>
+              <input
+                type="text"
+                value={poolCode}
+                onChange={(e) => setPoolCode(e.target.value)}
+                required
+                placeholder="e.g. pfc123 or test"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none text-gray-900"
+              />
+            </div>
+            {codeError && (
+              <div className="p-4 bg-red-50 text-red-800 rounded-lg border border-red-200">
+                {codeError}
+              </div>
+            )}
+            <button
+              type="submit"
+              disabled={validatingCode || !poolCode.trim()}
+              className="w-full bg-pink-500 text-white py-3 rounded-lg font-semibold hover:bg-pink-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {validatingCode ? 'Checking...' : 'Continue'}
+            </button>
+          </form>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-pink-500 py-8 px-4">
       <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-8">
         <div className="mb-8">
+          <button
+            type="button"
+            onClick={() => { setStep('code'); setCodeError(null) }}
+            className="text-pink-500 hover:text-pink-600 mb-4 flex items-center gap-2"
+          >
+            ← Back to pool code
+          </button>
           <div className="flex justify-center mb-4">
             <EightBallLogo size={64} />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Your Profile</h1>
-          <p className="text-gray-600">Set up your account to get started</p>
+          <p className="text-gray-600">Pool: <span className="font-semibold">{poolCode || '—'}</span></p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
