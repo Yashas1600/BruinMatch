@@ -2,15 +2,12 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { type EmailOtpType } from '@supabase/supabase-js'
 import EightBallLogo from '@/components/EightBallLogo'
 
 function ConfirmContent() {
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [ready, setReady] = useState(false)
-  const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
 
@@ -18,27 +15,25 @@ function ConfirmContent() {
   const type = searchParams.get('type') as EmailOtpType | null
 
   useEffect(() => {
-    if (token_hash && type) {
-      setReady(true)
-    } else {
+    if (!token_hash || !type) {
       setError('Invalid or missing sign-in link. Please request a new one.')
+      return
     }
-  }, [token_hash, type])
 
-  const handleSignIn = async () => {
-    if (!token_hash || !type) return
-
-    setLoading(true)
-    setError(null)
-
-    try {
+    const verify = async () => {
       const { error } = await supabase.auth.verifyOtp({ token_hash, type })
-      if (error) throw error
 
-      // Check profile and redirect accordingly
+      if (error) {
+        setError(error.message || 'Sign in failed. Please request a new magic link.')
+        return
+      }
+
       const { data: { user } } = await supabase.auth.getUser()
 
-      if (!user) throw new Error('Sign in failed. Please try again.')
+      if (!user) {
+        setError('Sign in failed. Please request a new magic link.')
+        return
+      }
 
       const { data: profile } = await supabase
         .from('profiles')
@@ -47,7 +42,8 @@ function ConfirmContent() {
         .single()
 
       if (!profile) {
-        router.push('/onboarding')
+        // Full page navigation ensures session cookies are included in the next request
+        window.location.href = '/onboarding'
         return
       }
 
@@ -58,16 +54,15 @@ function ConfirmContent() {
         .single()
 
       if (!preferences) {
-        router.push('/preferences')
+        window.location.href = '/preferences'
         return
       }
 
-      router.push('/swipe')
-    } catch (err: any) {
-      setError(err.message || 'Sign in failed. Please request a new magic link.')
-      setLoading(false)
+      window.location.href = '/swipe'
     }
-  }
+
+    verify()
+  }, [token_hash, type])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-white px-4">
@@ -75,26 +70,24 @@ function ConfirmContent() {
         <div className="flex justify-center mb-4">
           <EightBallLogo size={64} />
         </div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">you're almost in</h1>
-        <p className="text-gray-600 mb-8">tap the button below to complete your sign in</p>
 
         {error ? (
-          <div className="mb-6 p-4 rounded-lg bg-red-50 text-red-800 border border-red-200">
-            {error}
-            <div className="mt-3">
-              <a href="/auth/login" className="text-pink-500 font-semibold hover:underline">
-                request a new link →
-              </a>
+          <>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Link expired</h1>
+            <div className="mb-6 p-4 rounded-lg bg-red-50 text-red-800 border border-red-200 text-sm">
+              {error}
             </div>
-          </div>
+            <a href="/auth/login" className="text-pink-500 font-semibold hover:underline">
+              Request a new link →
+            </a>
+          </>
         ) : (
-          <button
-            onClick={handleSignIn}
-            disabled={loading || !ready}
-            className="w-full bg-pink-500 text-white py-4 rounded-lg font-semibold text-lg hover:bg-pink-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? 'signing you in...' : 'let me in 🚪'}
-          </button>
+          <>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Signing you in...</h1>
+            <div className="flex justify-center mt-4">
+              <div className="w-8 h-8 border-2 border-pink-200 border-t-pink-500 rounded-full animate-spin"></div>
+            </div>
+          </>
         )}
       </div>
     </div>
