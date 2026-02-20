@@ -39,14 +39,14 @@ export default function OnboardingPage() {
     setValidatingCode(true)
     setCodeError(null)
     try {
-      const { isPoolCodeValid, normalizePoolCode } = await import('@/app/actions/pool')
+      const { isPoolCodeValid } = await import('@/app/actions/pool')
       const trimmed = poolCode.trim()
       const valid = await isPoolCodeValid(trimmed)
       if (!valid) {
         setCodeError('Invalid pool code. Check with your organizer or try again.')
         return
       }
-      setPoolCode(normalizePoolCode(trimmed))
+      setPoolCode(trimmed.toLowerCase())
       setStep('profile')
     } catch (err: any) {
       setCodeError('Something went wrong. Please try again.')

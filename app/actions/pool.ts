@@ -55,11 +55,6 @@ export async function isPoolCodeValid(poolCode: string): Promise<boolean> {
   return validCodes.has(normalized)
 }
 
-/** Normalize pool code for storage (lowercase). */
-export function normalizePoolCode(poolCode: string): string {
-  return poolCode.trim().toLowerCase()
-}
-
 /** Admin only: set pool status. Uses service role so it can update pool_config. */
 export async function setPoolStatus(
   poolCode: string,
