@@ -32,8 +32,8 @@ export default function WaitingClient({
       <p className="text-gray-600 mb-6">
         The admin has not started your pool yet. You&apos;ll be able to match once they turn it on.
       </p>
-      <div className="bg-blush-50 rounded-xl p-6 mb-6">
-        <p className="text-5xl font-bold text-blush-600">{count}</p>
+      <div className="bg-pink-50 rounded-xl p-6 mb-6">
+        <p className="text-5xl font-bold text-pink-600">{count}</p>
         <p className="text-gray-600 mt-1">
           {count === 1 ? 'person has' : 'people have'} signed up
         </p>
@@ -44,7 +44,7 @@ export default function WaitingClient({
       </p>
       <Link
         href="/waiting"
-        className="mt-6 inline-block text-blush-600 hover:text-blush-700 font-medium"
+        className="mt-6 inline-block text-pink-600 hover:text-pink-700 font-medium"
       >
         Refresh
       </Link>

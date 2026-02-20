@@ -171,7 +171,7 @@ export default function OnboardingPage() {
   // Pool code step
   if (step === 'code') {
     return (
-      <div className="min-h-screen bg-blush-500 py-8 px-4">
+      <div className="min-h-screen bg-pink-500 py-8 px-4">
         <div className="max-w-md mx-auto bg-white rounded-2xl shadow-xl p-8">
           <div className="flex justify-center mb-4">
             <EightBallLogo size={64} />
@@ -189,7 +189,7 @@ export default function OnboardingPage() {
                 onChange={(e) => setPoolCode(e.target.value)}
                 required
                 placeholder="Enter code"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blush-500 focus:border-transparent outline-none text-gray-900"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none text-gray-900"
               />
             </div>
             {codeError && (
@@ -200,7 +200,7 @@ export default function OnboardingPage() {
             <button
               type="submit"
               disabled={validatingCode || !poolCode.trim()}
-              className="w-full bg-blush-500 text-white py-3 rounded-lg font-semibold hover:bg-blush-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-pink-500 text-white py-3 rounded-lg font-semibold hover:bg-pink-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {validatingCode ? 'Checking...' : 'Continue'}
             </button>
@@ -211,13 +211,13 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-blush-500 py-8 px-4">
+    <div className="min-h-screen bg-pink-500 py-8 px-4">
       <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-8">
         <div className="mb-8">
           <button
             type="button"
             onClick={() => { setStep('code'); setCodeError(null) }}
-            className="text-blush-500 hover:text-blush-600 mb-4 flex items-center gap-2"
+            className="text-pink-500 hover:text-pink-600 mb-4 flex items-center gap-2"
           >
             ← Back to pool code
           </button>
@@ -237,7 +237,7 @@ export default function OnboardingPage() {
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blush-500 focus:border-transparent outline-none text-gray-900"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none text-gray-900"
             />
           </div>
 
@@ -251,7 +251,7 @@ export default function OnboardingPage() {
               value={formData.age}
               onChange={(e) => setFormData({ ...formData, age: e.target.value })}
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blush-500 focus:border-transparent outline-none text-gray-900"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none text-gray-900"
             />
           </div>
 
@@ -264,7 +264,7 @@ export default function OnboardingPage() {
               value={formData.frat}
               onChange={(e) => setFormData({ ...formData, frat: e.target.value })}
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blush-500 focus:border-transparent outline-none text-gray-900"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none text-gray-900"
             >
               <option value="">Select...</option>
               {UCLA_FRATS_SORORITIES.map((frat) => (
@@ -288,7 +288,7 @@ export default function OnboardingPage() {
                   value={formData.heightFeet}
                   onChange={(e) => setFormData({ ...formData, heightFeet: e.target.value })}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blush-500 focus:border-transparent outline-none text-gray-900"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none text-gray-900"
                 />
               </div>
               <div className="flex-1">
@@ -300,7 +300,7 @@ export default function OnboardingPage() {
                   value={formData.heightInches}
                   onChange={(e) => setFormData({ ...formData, heightInches: e.target.value })}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blush-500 focus:border-transparent outline-none text-gray-900"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none text-gray-900"
                 />
               </div>
             </div>
@@ -317,7 +317,7 @@ export default function OnboardingPage() {
                 onClick={() => setFormData({ ...formData, gender: 'men' })}
                 className={`flex-1 py-3 rounded-lg font-medium transition ${
                   formData.gender === 'men'
-                    ? 'bg-blush-500 text-white'
+                    ? 'bg-pink-500 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
@@ -328,7 +328,7 @@ export default function OnboardingPage() {
                 onClick={() => setFormData({ ...formData, gender: 'women' })}
                 className={`flex-1 py-3 rounded-lg font-medium transition ${
                   formData.gender === 'women'
-                    ? 'bg-blush-500 text-white'
+                    ? 'bg-pink-500 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
@@ -350,7 +350,7 @@ export default function OnboardingPage() {
                   onClick={() => setFormData({ ...formData, interested_in: option.value as any })}
                   className={`flex-1 py-3 rounded-lg font-medium transition ${
                     formData.interested_in === option.value
-                      ? 'bg-blush-500 text-white'
+                      ? 'bg-pink-500 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
@@ -383,7 +383,7 @@ export default function OnboardingPage() {
                   }}
                   className={`py-2 px-3 rounded-lg text-sm font-medium transition ${
                     formData.frat_whitelist.includes(frat)
-                      ? 'bg-blush-500 text-white'
+                      ? 'bg-pink-500 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
@@ -404,7 +404,7 @@ export default function OnboardingPage() {
               maxLength={200}
               rows={3}
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blush-500 focus:border-transparent outline-none resize-none text-gray-900"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none resize-none text-gray-900"
               placeholder="Tell us something interesting about yourself..."
             />
             <p className="text-sm text-gray-500 mt-1">
@@ -439,7 +439,7 @@ export default function OnboardingPage() {
             </div>
 
             {photos.length < MAX_PHOTOS && (
-              <label className="block w-full py-4 border-2 border-dashed border-gray-300 rounded-lg text-center cursor-pointer hover:border-blush-500 transition">
+              <label className="block w-full py-4 border-2 border-dashed border-gray-300 rounded-lg text-center cursor-pointer hover:border-pink-500 transition">
                 <span className="text-gray-600">
                   Click to upload ({photos.length}/{MAX_PHOTOS})
                 </span>
@@ -463,7 +463,7 @@ export default function OnboardingPage() {
           <button
             type="submit"
             disabled={loading || photos.length !== MAX_PHOTOS}
-            className="w-full bg-blush-500 text-white py-3 rounded-lg font-semibold hover:bg-blush-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-pink-500 text-white py-3 rounded-lg font-semibold hover:bg-pink-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Creating Profile...' : 'Start Swiping'}
           </button>
