@@ -90,7 +90,7 @@ async function getAdminStats() {
   // Get pool config (status per pool)
   const { data: poolConfigs } = await supabase
     .from('pool_config')
-    .select('pool_code, status')
+    .select('pool_code, status, display_count')
 
   return {
     totalUsers: totalUsers || 0,
@@ -102,6 +102,7 @@ async function getAdminStats() {
     datingPools: datingPools,
     poolConfigs: (poolConfigs || []).map(pc => ({
       ...pc,
+      display_count: pc.display_count ?? 0,
       signupCount: allProfiles?.filter(p => p.dating_pool === pc.pool_code).length ?? 0,
     })),
   }

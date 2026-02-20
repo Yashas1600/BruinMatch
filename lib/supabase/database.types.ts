@@ -103,16 +103,19 @@ export interface Database {
           pool_code: string
           status: string
           updated_at: string
+          display_count: number
         }
         Insert: {
           pool_code: string
           status?: string
           updated_at?: string
+          display_count?: number
         }
         Update: {
           pool_code?: string
           status?: string
           updated_at?: string
+          display_count?: number
         }
       }
       swipes: {

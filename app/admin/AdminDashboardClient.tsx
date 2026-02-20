@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { setPoolStatus, type PoolStatus } from '@/app/actions/pool'
+import { setPoolStatus, setDisplayCount, type PoolStatus } from '@/app/actions/pool'
 
 interface Profile {
   id: string
@@ -21,6 +21,7 @@ interface PoolConfig {
   pool_code: string
   status: string
   signupCount: number
+  display_count: number
 }
 
 interface AdminDashboardClientProps {
@@ -51,12 +52,24 @@ export default function AdminDashboardClient({
   const [sortField, setSortField] = useState<SortField>('created_at')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
   const [poolActionLoading, setPoolActionLoading] = useState<string | null>(null)
+  const [displayCountInputs, setDisplayCountInputs] = useState<Record<string, string>>(
+    () => Object.fromEntries(poolConfigs.map(pc => [pc.pool_code, String(pc.display_count)]))
+  )
+  const [displayCountSaving, setDisplayCountSaving] = useState<string | null>(null)
 
   const handlePoolAction = async (poolCode: string, status: PoolStatus) => {
     setPoolActionLoading(poolCode)
     await setPoolStatus(poolCode, status)
     setPoolActionLoading(null)
     window.location.reload()
+  }
+
+  const handleSaveDisplayCount = async (poolCode: string) => {
+    const val = parseInt(displayCountInputs[poolCode] ?? '0')
+    if (isNaN(val) || val < 0) return
+    setDisplayCountSaving(poolCode)
+    await setDisplayCount(poolCode, val)
+    setDisplayCountSaving(null)
   }
 
   // Filter profiles based on selected pool
@@ -130,11 +143,30 @@ export default function AdminDashboardClient({
                 key={pc.pool_code}
                 className="flex flex-wrap items-center gap-4 p-4 border border-gray-200 rounded-lg"
               >
-                <div>
+                <div className="flex-1 min-w-0">
                   <span className="font-medium text-gray-900">{pc.pool_code}</span>
                   <span className="ml-2 text-gray-500">
                     ({pc.signupCount} signed up · {pc.status})
                   </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-sm text-gray-500 whitespace-nowrap">Display count</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={displayCountInputs[pc.pool_code] ?? '0'}
+                    onChange={(e) =>
+                      setDisplayCountInputs(prev => ({ ...prev, [pc.pool_code]: e.target.value }))
+                    }
+                    className="w-24 px-2 py-1 border border-gray-300 rounded text-sm text-gray-900 focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
+                  />
+                  <button
+                    onClick={() => handleSaveDisplayCount(pc.pool_code)}
+                    disabled={displayCountSaving === pc.pool_code}
+                    className="px-3 py-1 text-sm bg-gray-700 text-white rounded hover:bg-gray-800 disabled:opacity-50"
+                  >
+                    {displayCountSaving === pc.pool_code ? '…' : 'Save'}
+                  </button>
                 </div>
                 <div className="flex gap-2">
                   {pc.status === 'waiting' && (

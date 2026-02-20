@@ -55,6 +55,39 @@ export async function isPoolCodeValid(poolCode: string): Promise<boolean> {
   return validCodes.has(normalized)
 }
 
+export async function getDisplayCount(poolCode: string): Promise<number> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('pool_config')
+    .select('display_count')
+    .eq('pool_code', poolCode)
+    .single()
+  return data?.display_count ?? 0
+}
+
+/** Admin only: set the fake display count shown on the waiting page. */
+export async function setDisplayCount(
+  poolCode: string,
+  displayCount: number
+): Promise<{ success: boolean; error?: string }> {
+  const { isAdminAuthenticated } = await import('@/app/actions/admin')
+  if (!(await isAdminAuthenticated())) {
+    return { success: false, error: 'Unauthorized' }
+  }
+  const { createClient: createSupabaseClient } = await import('@supabase/supabase-js')
+  const supabase = createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
+  const { error } = await supabase
+    .from('pool_config')
+    .update({ display_count: displayCount })
+    .eq('pool_code', poolCode)
+  if (error) return { success: false, error: error.message }
+  return { success: true }
+}
+
 /** Admin only: set pool status. Uses service role so it can update pool_config. */
 export async function setPoolStatus(
   poolCode: string,

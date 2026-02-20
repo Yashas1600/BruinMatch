@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { getPoolStatus, getSignupCount } from '@/app/actions/pool'
+import { getPoolStatus, getDisplayCount } from '@/app/actions/pool'
 import WaitingClient from './WaitingClient'
 
 export default async function WaitingPage() {
@@ -18,14 +18,14 @@ export default async function WaitingPage() {
   if (!profile) redirect('/onboarding')
 
   const status = await getPoolStatus(profile.dating_pool)
-  const count = await getSignupCount(profile.dating_pool)
+  const displayCount = await getDisplayCount(profile.dating_pool)
 
   if (status === 'active') redirect('/swipe')
   if (status === 'paused') redirect('/paused')
 
   return (
     <div className="min-h-screen bg-pink-500 flex items-center justify-center px-4">
-      <WaitingClient signupCount={count} poolCode={profile.dating_pool} />
+      <WaitingClient displayCount={displayCount} poolCode={profile.dating_pool} />
     </div>
   )
 }

@@ -1,25 +1,49 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { getSignupCount, getPoolStatus } from '@/app/actions/pool'
+import { useState, useEffect, useRef } from 'react'
+import { getDisplayCount, getPoolStatus } from '@/app/actions/pool'
 import Link from 'next/link'
 
+// Set to false to disable the auto-increment entirely
+const FAKE_BUMP_ENABLED = true
+
+function randomInt(min: number, max: number) {
+  return Math.floor(Math.random() * (max - min + 1)) + min
+}
+
 export default function WaitingClient({
-  signupCount: initialCount,
+  displayCount: initialCount,
   poolCode,
 }: {
-  signupCount: number
+  displayCount: number
   poolCode: string
 }) {
   const [count, setCount] = useState(initialCount)
+  const pollCountRef = useRef(0)
+  const bumpThresholdRef = useRef(randomInt(3, 5))
 
   useEffect(() => {
     const interval = setInterval(async () => {
-      const [newCount, status] = await Promise.all([
-        getSignupCount(poolCode),
+      const [newDisplayCount, status] = await Promise.all([
+        getDisplayCount(poolCode),
         getPoolStatus(poolCode),
       ])
-      setCount(newCount)
+
+      // Always sync to the admin-set value as the floor
+      setCount(prev => {
+        pollCountRef.current += 1
+
+        let next = Math.max(prev, newDisplayCount)
+
+        if (FAKE_BUMP_ENABLED && pollCountRef.current >= bumpThresholdRef.current) {
+          next += 1
+          pollCountRef.current = 0
+          bumpThresholdRef.current = randomInt(3, 5)
+        }
+
+        return next
+      })
+
       if (status === 'active') window.location.href = '/swipe'
       if (status === 'paused') window.location.href = '/paused'
     }, 5000)
