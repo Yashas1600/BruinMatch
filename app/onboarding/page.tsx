@@ -188,7 +188,7 @@ export default function OnboardingPage() {
                 value={poolCode}
                 onChange={(e) => setPoolCode(e.target.value)}
                 required
-                placeholder="e.g. pfc123 or test"
+                placeholder="Enter code"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none text-gray-900"
               />
             </div>

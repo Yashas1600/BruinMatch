@@ -1,28 +1,16 @@
 export const UCLA_FRATS_SORORITIES = [
-  // Professional Fraternities
-  'Alpha Kappa Psi',
-  'Delta Sigma Pi',
-  'Phi Chi Theta',
-
-  // Professional Sororities
-  'Kappa Alpha Theta',
-  'Delta Gamma',
-  'Gamma Phi Beta',
-
-  // Business Fraternities
-  'Beta Alpha Psi',
-  'Financial Management Association',
-
-  // Engineering
-  'Theta Tau',
-  'Alpha Omega Epsilon',
-
-  // Medical/Health
-  'Phi Delta Epsilon',
-  'Alpha Epsilon Delta',
-
-  // Other
-  'Other'
+  'AED',
+  'AKP',
+  'DEM',
+  'DKA',
+  'DSP',
+  'PAD',
+  'PHI CHI',
+  'PSE/PCT',
+  'SEP',
+  'TT',
+  'REI',
+  'KAPI',
 ] as const
 
 export const MIN_AGE = 18
