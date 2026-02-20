@@ -8,18 +8,21 @@ import { validateImageFile, feetInchesToCm } from '@/lib/utils'
 import Image from 'next/image'
 import EightBallLogo from '@/components/EightBallLogo'
 
+// Steps: 0 = pool code, 1 = name/age/gender, 2 = frat/height, 3 = preferences, 4 = bio/photos
+const TOTAL_PROFILE_STEPS = 4
+
 export default function OnboardingPage() {
   const router = useRouter()
   const supabase = createClient()
 
-  const [step, setStep] = useState<'code' | 'profile'>('code')
+  const [step, setStep] = useState(0)
   const [poolCode, setPoolCode] = useState('')
   const [codeError, setCodeError] = useState<string | null>(null)
   const [validatingCode, setValidatingCode] = useState(false)
+  const [stepError, setStepError] = useState<string | null>(null)
 
-  // Ensure code step is shown first when pool code isn't set (e.g. direct nav or hydration)
   useEffect(() => {
-    if (step === 'profile' && !poolCode) setStep('code')
+    if (step > 0 && !poolCode) setStep(0)
   }, [step, poolCode])
 
   const [formData, setFormData] = useState({
@@ -39,6 +42,7 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // --- Pool code step ---
   const handlePoolCodeSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setValidatingCode(true)
@@ -52,36 +56,61 @@ export default function OnboardingPage() {
         return
       }
       setPoolCode(trimmed.toLowerCase())
-      setStep('profile')
-    } catch (err: any) {
+      setStep(1)
+    } catch {
       setCodeError('Something went wrong. Please try again.')
     } finally {
       setValidatingCode(false)
     }
   }
 
+  // --- Per-step validation before advancing ---
+  const validateStep = (): string | null => {
+    if (step === 1) {
+      if (!formData.name.trim()) return 'Please enter your name.'
+      const age = parseInt(formData.age)
+      if (!formData.age || isNaN(age) || age < 18 || age > 100) return 'Please enter a valid age (18–100).'
+    }
+    if (step === 2) {
+      if (!formData.frat) return 'Please select your fraternity or sorority.'
+      const feet = parseInt(formData.heightFeet)
+      const inches = parseInt(formData.heightInches)
+      if (!formData.heightFeet || isNaN(feet) || feet < 4 || feet > 7) return 'Please enter a valid height (feet).'
+      if (formData.heightInches === '' || isNaN(inches) || inches < 0 || inches > 11) return 'Please enter valid inches (0–11).'
+    }
+    if (step === 4) {
+      if (!formData.one_liner.trim()) return 'Please write a short bio.'
+      if (photos.length !== MAX_PHOTOS) return `Please upload exactly ${MAX_PHOTOS} photos.`
+    }
+    return null
+  }
+
+  const handleNext = () => {
+    const err = validateStep()
+    if (err) { setStepError(err); return }
+    setStepError(null)
+    setStep(step + 1)
+  }
+
+  const handleBack = () => {
+    setStepError(null)
+    setStep(step - 1)
+  }
+
+  // --- Photos ---
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
-
     if (photos.length + files.length > MAX_PHOTOS) {
-      setError(`You can only upload up to ${MAX_PHOTOS} photos`)
+      setStepError(`You can only upload up to ${MAX_PHOTOS} photos.`)
       return
     }
-
-    // Validate each file
     for (const file of files) {
       const validation = validateImageFile(file)
-      if (!validation.valid) {
-        setError(validation.error!)
-        return
-      }
+      if (!validation.valid) { setStepError(validation.error!); return }
     }
-
-    // Create previews
-    const newPreviews = files.map(file => URL.createObjectURL(file))
     setPhotos([...photos, ...files])
-    setPhotoPreviews([...photoPreviews, ...newPreviews])
-    setError(null)
+    setPhotoPreviews([...photoPreviews, ...files.map(f => URL.createObjectURL(f))])
+    setStepError(null)
   }
 
   const removePhoto = (index: number) => {
@@ -90,46 +119,28 @@ export default function OnboardingPage() {
     setPhotoPreviews(photoPreviews.filter((_, i) => i !== index))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  // --- Final submit ---
+  const handleSubmit = async () => {
+    const err = validateStep()
+    if (err) { setStepError(err); return }
     setLoading(true)
     setError(null)
-
     try {
-      // Validate photos
-      if (photos.length !== MAX_PHOTOS) {
-        throw new Error(`Please upload exactly ${MAX_PHOTOS} photos`)
-      }
-
-      // Get current user
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
-      // Upload photos to Supabase Storage
       const photoUrls: string[] = []
       for (let i = 0; i < photos.length; i++) {
         const file = photos[i]
         const fileExt = file.name.split('.').pop()
         const fileName = `${user.id}/${Date.now()}-${i}.${fileExt}`
-
-        const { error: uploadError, data } = await supabase.storage
-          .from('profile-photos')
-          .upload(fileName, file)
-
+        const { error: uploadError } = await supabase.storage.from('profile-photos').upload(fileName, file)
         if (uploadError) throw uploadError
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('profile-photos')
-          .getPublicUrl(fileName)
-
+        const { data: { publicUrl } } = supabase.storage.from('profile-photos').getPublicUrl(fileName)
         photoUrls.push(publicUrl)
       }
 
-      // Create profile
-      const height_cm = feetInchesToCm(
-        parseInt(formData.heightFeet),
-        parseInt(formData.heightInches)
-      )
+      const height_cm = feetInchesToCm(parseInt(formData.heightFeet), parseInt(formData.heightInches))
 
       const { error: profileError } = await supabase.from('profiles').insert({
         id: user.id,
@@ -144,10 +155,8 @@ export default function OnboardingPage() {
         photos: photoUrls,
         dating_pool: poolCode.trim().toLowerCase(),
       })
-
       if (profileError) throw profileError
 
-      // Create preferences
       const { error: prefsError } = await supabase.from('preferences').insert({
         user_id: user.id,
         frat_whitelist: formData.frat_whitelist.length > 0 ? formData.frat_whitelist : null,
@@ -157,7 +166,6 @@ export default function OnboardingPage() {
         height_max: feetInchesToCm(7, 0),
         interested_in: formData.interested_in,
       })
-
       if (prefsError) throw prefsError
 
       router.push('/')
@@ -168,41 +176,36 @@ export default function OnboardingPage() {
     }
   }
 
-  // Pool code step
-  if (step === 'code') {
+  // --- Step 0: Pool code ---
+  if (step === 0) {
     return (
-      <div className="min-h-screen bg-pink-500 py-8 px-4">
-        <div className="max-w-md mx-auto bg-white rounded-2xl shadow-xl p-8">
+      <div className="min-h-screen bg-pink-500 flex items-center justify-center px-4">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
           <div className="flex justify-center mb-4">
             <EightBallLogo size={64} />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2 text-center">Join a pool</h1>
           <p className="text-gray-600 mb-6 text-center">
-            Enter your pool code. You’ll only see and match with people in the same pool.
+            Enter your pool code to get started.
           </p>
-          <form onSubmit={handlePoolCodeSubmit} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Pool code</label>
-              <input
-                type="text"
-                value={poolCode}
-                onChange={(e) => setPoolCode(e.target.value)}
-                required
-                placeholder="Enter code"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none text-gray-900"
-              />
-            </div>
+          <form onSubmit={handlePoolCodeSubmit} className="space-y-4">
+            <input
+              type="text"
+              value={poolCode}
+              onChange={(e) => setPoolCode(e.target.value)}
+              required
+              placeholder="Enter code"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none text-gray-900"
+            />
             {codeError && (
-              <div className="p-4 bg-red-50 text-red-800 rounded-lg border border-red-200">
-                {codeError}
-              </div>
+              <div className="p-3 bg-red-50 text-red-800 rounded-lg border border-red-200 text-sm">{codeError}</div>
             )}
             <button
               type="submit"
               disabled={validatingCode || !poolCode.trim()}
               className="w-full bg-pink-500 text-white py-3 rounded-lg font-semibold hover:bg-pink-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {validatingCode ? 'Checking...' : 'Continue'}
+              {validatingCode ? 'Checking...' : 'Continue →'}
             </button>
           </form>
         </div>
@@ -210,264 +213,268 @@ export default function OnboardingPage() {
     )
   }
 
+  // --- Progress bar (steps 1–4) ---
+  const progress = ((step - 1) / TOTAL_PROFILE_STEPS) * 100
+
   return (
-    <div className="min-h-screen bg-pink-500 py-8 px-4">
-      <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-8">
-        <div className="mb-8">
-          <button
-            type="button"
-            onClick={() => { setStep('code'); setCodeError(null) }}
-            className="text-pink-500 hover:text-pink-600 mb-4 flex items-center gap-2"
-          >
-            ← Back to pool code
-          </button>
-          <div className="flex justify-center mb-4">
-            <EightBallLogo size={64} />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Your Profile</h1>
-          <p className="text-gray-600">Pool: <span className="font-semibold">{poolCode || '—'}</span></p>
+    <div className="min-h-screen bg-pink-500 flex items-center justify-center px-4 py-8">
+      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden">
+        {/* Progress bar */}
+        <div className="h-1.5 bg-gray-100">
+          <div
+            className="h-full bg-pink-500 transition-all duration-300"
+            style={{ width: `${progress}%` }}
+          />
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Name */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Name *</label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none text-gray-900"
-            />
-          </div>
+        <div className="p-8">
+          {/* Step counter */}
+          <p className="text-xs text-gray-400 mb-6 text-right">
+            Step {step} of {TOTAL_PROFILE_STEPS}
+          </p>
 
-          {/* Age */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Age *</label>
-            <input
-              type="number"
-              min="18"
-              max="100"
-              value={formData.age}
-              onChange={(e) => setFormData({ ...formData, age: e.target.value })}
-              required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none text-gray-900"
-            />
-          </div>
+          {/* --- Step 1: Name, Age, Gender --- */}
+          {step === 1 && (
+            <div className="space-y-5">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-1">About you</h2>
+                <p className="text-gray-500 text-sm">The basics first.</p>
+              </div>
 
-          {/* Frat/Sorority */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Fraternity/Sorority *
-            </label>
-            <select
-              value={formData.frat}
-              onChange={(e) => setFormData({ ...formData, frat: e.target.value })}
-              required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none text-gray-900"
-            >
-              <option value="">Select...</option>
-              {UCLA_FRATS_SORORITIES.map((frat) => (
-                <option key={frat} value={frat}>
-                  {frat}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Height */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Height *</label>
-            <div className="flex gap-4">
-              <div className="flex-1">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
                 <input
-                  type="number"
-                  min="4"
-                  max="7"
-                  placeholder="Feet"
-                  value={formData.heightFeet}
-                  onChange={(e) => setFormData({ ...formData, heightFeet: e.target.value })}
-                  required
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none text-gray-900"
                 />
               </div>
-              <div className="flex-1">
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Age *</label>
                 <input
                   type="number"
-                  min="0"
-                  max="11"
-                  placeholder="Inches"
-                  value={formData.heightInches}
-                  onChange={(e) => setFormData({ ...formData, heightInches: e.target.value })}
-                  required
+                  min="18"
+                  max="100"
+                  value={formData.age}
+                  onChange={(e) => setFormData({ ...formData, age: e.target.value })}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none text-gray-900"
                 />
               </div>
-            </div>
-          </div>
 
-          {/* Gender Identity */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              I am a: *
-            </label>
-            <div className="flex gap-4">
-              <button
-                type="button"
-                onClick={() => setFormData({ ...formData, gender: 'men' })}
-                className={`flex-1 py-3 rounded-lg font-medium transition ${
-                  formData.gender === 'men'
-                    ? 'bg-pink-500 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                Man
-              </button>
-              <button
-                type="button"
-                onClick={() => setFormData({ ...formData, gender: 'women' })}
-                className={`flex-1 py-3 rounded-lg font-medium transition ${
-                  formData.gender === 'women'
-                    ? 'bg-pink-500 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                Woman
-              </button>
-            </div>
-          </div>
-
-          {/* Interested In */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Show me: *
-            </label>
-            <div className="flex gap-4">
-              {GENDER_OPTIONS.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => setFormData({ ...formData, interested_in: option.value as any })}
-                  className={`flex-1 py-3 rounded-lg font-medium transition ${
-                    formData.interested_in === option.value
-                      ? 'bg-pink-500 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Frat Whitelist */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Only show me people from (Optional)
-            </label>
-            <p className="text-sm text-gray-500 mb-3">
-              Leave empty to see everyone, or select specific fraternities/sororities
-            </p>
-            <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto p-2 border border-gray-200 rounded-lg">
-              {UCLA_FRATS_SORORITIES.map((frat) => (
-                <button
-                  key={frat}
-                  type="button"
-                  onClick={() => {
-                    setFormData({
-                      ...formData,
-                      frat_whitelist: formData.frat_whitelist.includes(frat)
-                        ? formData.frat_whitelist.filter(f => f !== frat)
-                        : [...formData.frat_whitelist, frat],
-                    })
-                  }}
-                  className={`py-2 px-3 rounded-lg text-sm font-medium transition ${
-                    formData.frat_whitelist.includes(frat)
-                      ? 'bg-pink-500 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {frat}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* One-liner */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              One-liner Bio * (max 200 characters)
-            </label>
-            <textarea
-              value={formData.one_liner}
-              onChange={(e) => setFormData({ ...formData, one_liner: e.target.value })}
-              maxLength={200}
-              rows={3}
-              required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none resize-none text-gray-900"
-              placeholder="Tell us something interesting about yourself..."
-            />
-            <p className="text-sm text-gray-500 mt-1">
-              {formData.one_liner.length}/200 characters
-            </p>
-          </div>
-
-          {/* Photos */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Upload {MAX_PHOTOS} Photos *
-            </label>
-
-            <div className="grid grid-cols-3 gap-4 mb-4">
-              {photoPreviews.map((preview, index) => (
-                <div key={index} className="relative aspect-square">
-                  <Image
-                    src={preview}
-                    alt={`Preview ${index + 1}`}
-                    fill
-                    className="object-cover rounded-lg"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removePhoto(index)}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center hover:bg-red-600"
-                  >
-                    ×
-                  </button>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">I am a *</label>
+                <div className="flex gap-3">
+                  {(['men', 'women'] as const).map((g) => (
+                    <button
+                      key={g}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, gender: g })}
+                      className={`flex-1 py-3 rounded-lg font-medium transition ${
+                        formData.gender === g ? 'bg-pink-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {g === 'men' ? 'Man' : 'Woman'}
+                    </button>
+                  ))}
                 </div>
-              ))}
-            </div>
-
-            {photos.length < MAX_PHOTOS && (
-              <label className="block w-full py-4 border-2 border-dashed border-gray-300 rounded-lg text-center cursor-pointer hover:border-pink-500 transition">
-                <span className="text-gray-600">
-                  Click to upload ({photos.length}/{MAX_PHOTOS})
-                </span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handlePhotoChange}
-                  className="hidden"
-                />
-              </label>
-            )}
-          </div>
-
-          {error && (
-            <div className="p-4 bg-red-50 text-red-800 rounded-lg border border-red-200">
-              {error}
+              </div>
             </div>
           )}
 
-          <button
-            type="submit"
-            disabled={loading || photos.length !== MAX_PHOTOS}
-            className="w-full bg-pink-500 text-white py-3 rounded-lg font-semibold hover:bg-pink-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Creating Profile...' : 'Start Swiping'}
-          </button>
-        </form>
+          {/* --- Step 2: Frat, Height --- */}
+          {step === 2 && (
+            <div className="space-y-5">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-1">Your chapter</h2>
+                <p className="text-gray-500 text-sm">Where do you call home?</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Fraternity / Sorority *</label>
+                <select
+                  value={formData.frat}
+                  onChange={(e) => setFormData({ ...formData, frat: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none text-gray-900"
+                >
+                  <option value="">Select...</option>
+                  {UCLA_FRATS_SORORITIES.map((f) => (
+                    <option key={f} value={f}>{f}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Height *</label>
+                <div className="flex gap-3">
+                  <input
+                    type="number"
+                    min="4"
+                    max="7"
+                    placeholder="ft"
+                    value={formData.heightFeet}
+                    onChange={(e) => setFormData({ ...formData, heightFeet: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none text-gray-900"
+                  />
+                  <input
+                    type="number"
+                    min="0"
+                    max="11"
+                    placeholder="in"
+                    value={formData.heightInches}
+                    onChange={(e) => setFormData({ ...formData, heightInches: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none text-gray-900"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* --- Step 3: Interested in, Frat whitelist --- */}
+          {step === 3 && (
+            <div className="space-y-5">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-1">Your preferences</h2>
+                <p className="text-gray-500 text-sm">Who do you want to see?</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Show me *</label>
+                <div className="flex gap-3">
+                  {GENDER_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, interested_in: opt.value as any })}
+                      className={`flex-1 py-3 rounded-lg font-medium transition ${
+                        formData.interested_in === opt.value ? 'bg-pink-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Only show me people from <span className="text-gray-400 font-normal">(optional)</span>
+                </label>
+                <p className="text-xs text-gray-400 mb-2">Leave empty to see everyone.</p>
+                <div className="grid grid-cols-2 gap-2 max-h-52 overflow-y-auto p-2 border border-gray-200 rounded-lg">
+                  {UCLA_FRATS_SORORITIES.map((f) => (
+                    <button
+                      key={f}
+                      type="button"
+                      onClick={() =>
+                        setFormData({
+                          ...formData,
+                          frat_whitelist: formData.frat_whitelist.includes(f)
+                            ? formData.frat_whitelist.filter((x) => x !== f)
+                            : [...formData.frat_whitelist, f],
+                        })
+                      }
+                      className={`py-2 px-3 rounded-lg text-sm font-medium transition ${
+                        formData.frat_whitelist.includes(f) ? 'bg-pink-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {f}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* --- Step 4: Bio, Photos --- */}
+          {step === 4 && (
+            <div className="space-y-5">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-1">Your profile</h2>
+                <p className="text-gray-500 text-sm">Make a great first impression.</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Bio * <span className="text-gray-400 font-normal text-xs">({formData.one_liner.length}/200)</span>
+                </label>
+                <textarea
+                  value={formData.one_liner}
+                  onChange={(e) => setFormData({ ...formData, one_liner: e.target.value })}
+                  maxLength={200}
+                  rows={3}
+                  placeholder="Tell us something interesting about yourself..."
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none resize-none text-gray-900"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Photos * <span className="text-gray-400 font-normal text-xs">({photos.length}/{MAX_PHOTOS})</span>
+                </label>
+                <div className="grid grid-cols-3 gap-3 mb-3">
+                  {photoPreviews.map((preview, i) => (
+                    <div key={i} className="relative aspect-square">
+                      <Image src={preview} alt={`Preview ${i + 1}`} fill className="object-cover rounded-lg" />
+                      <button
+                        type="button"
+                        onClick={() => removePhoto(i)}
+                        className="absolute -top-1.5 -right-1.5 bg-red-500 text-white w-5 h-5 rounded-full text-xs flex items-center justify-center hover:bg-red-600"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                  {photos.length < MAX_PHOTOS && (
+                    <label className="aspect-square border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-pink-500 transition">
+                      <span className="text-gray-400 text-2xl">+</span>
+                      <input type="file" accept="image/*" multiple onChange={handlePhotoChange} className="hidden" />
+                    </label>
+                  )}
+                </div>
+              </div>
+
+              {error && (
+                <div className="p-3 bg-red-50 text-red-800 rounded-lg border border-red-200 text-sm">{error}</div>
+              )}
+            </div>
+          )}
+
+          {/* Per-step error */}
+          {stepError && (
+            <div className="mt-4 p-3 bg-red-50 text-red-800 rounded-lg border border-red-200 text-sm">{stepError}</div>
+          )}
+
+          {/* Navigation */}
+          <div className="flex gap-3 mt-8">
+            <button
+              type="button"
+              onClick={handleBack}
+              className="flex-1 py-3 rounded-lg font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
+            >
+              ← Back
+            </button>
+            {step < TOTAL_PROFILE_STEPS ? (
+              <button
+                type="button"
+                onClick={handleNext}
+                className="flex-1 py-3 rounded-lg font-semibold bg-pink-500 text-white hover:bg-pink-600 transition"
+              >
+                Next →
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={loading}
+                className="flex-1 py-3 rounded-lg font-semibold bg-pink-500 text-white hover:bg-pink-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Creating profile...' : 'Start Swiping →'}
+              </button>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   )
