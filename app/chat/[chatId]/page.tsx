@@ -28,6 +28,11 @@ export default function ChatPage() {
   const [currentUserId, setCurrentUserId] = useState<string>('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.push('/auth/login')
+  }
+
   useEffect(() => {
     loadChatInfo()
     loadMessages()
@@ -192,6 +197,13 @@ export default function ChatPage() {
               )}
             </div>
           </Link>
+
+          <button
+            onClick={handleLogout}
+            className="px-3 py-2 text-sm font-medium text-muted hover:text-foreground rounded-lg transition"
+          >
+            Log out
+          </button>
         </div>
 
         {/* Messages */}

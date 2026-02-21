@@ -7,6 +7,7 @@ import { UCLA_FRATS_SORORITIES, GENDER_OPTIONS, MAX_PHOTOS } from '@/lib/constan
 import { validateImageFile, feetInchesToCm } from '@/lib/utils'
 import Image from 'next/image'
 import EightBallLogo from '@/components/EightBallLogo'
+import Header from '@/components/Header'
 
 export default function OnboardingPage() {
   const router = useRouter()
@@ -171,8 +172,9 @@ export default function OnboardingPage() {
   // Pool code step
   if (step === 'code') {
     return (
-      <div className="min-h-screen bg-pink-500 py-8 px-4">
-        <div className="max-w-md mx-auto bg-white rounded-2xl shadow-xl p-8">
+      <div className="min-h-screen bg-pink-500 pt-4 py-8 px-4">
+        <Header />
+        <div className="max-w-md mx-auto bg-white rounded-2xl shadow-xl p-8 mt-4">
           <div className="flex justify-center mb-4">
             <EightBallLogo size={64} />
           </div>
@@ -211,8 +213,9 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-pink-500 py-8 px-4">
-      <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-8">
+    <div className="min-h-screen bg-pink-500 pt-4 py-8 px-4">
+      <Header />
+      <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-8 mt-4">
         <div className="mb-8">
           <button
             type="button"

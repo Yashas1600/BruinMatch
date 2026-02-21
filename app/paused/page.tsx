@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getPoolStatus } from '@/app/actions/pool'
+import Header from '@/components/Header'
 import PausedClient from './PausedClient'
 
 export default async function PausedPage() {
@@ -22,8 +23,11 @@ export default async function PausedPage() {
   if (status === 'waiting') redirect('/waiting')
 
   return (
-    <div className="min-h-screen bg-pink-500 flex items-center justify-center px-4">
-      <PausedClient poolCode={profile.dating_pool} />
+    <div className="min-h-screen bg-pink-500 pt-4 px-4 pb-8">
+      <Header />
+      <div className="flex items-center justify-center min-h-[calc(100vh-5rem)]">
+        <PausedClient poolCode={profile.dating_pool} />
+      </div>
     </div>
   )
 }

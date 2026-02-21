@@ -1,18 +1,27 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { getMatches } from '@/app/actions/matches'
 import { formatRelativeTime } from '@/lib/utils'
 import Link from 'next/link'
 import Image from 'next/image'
+import { createClient } from '@/lib/supabase/client'
 import Header from '@/components/Header'
 import BottomNav from '@/components/BottomNav'
 
 export default function MatchesPage() {
+  const router = useRouter()
+  const supabase = createClient()
   const [activeMatches, setActiveMatches] = useState<any[]>([])
   const [expiredMatches, setExpiredMatches] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'active' | 'expired'>('active')
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.push('/auth/login')
+  }
 
   useEffect(() => {
     loadMatches()
@@ -52,10 +61,11 @@ export default function MatchesPage() {
         <div className="max-w-md mx-auto mb-5 relative flex items-center justify-between px-1">
           <div></div>
           <h1 className="text-lg font-bold text-foreground tracking-tight">Matches</h1>
-          <button className="p-2 hover:bg-primary-50 rounded-full transition">
-            <svg className="w-5 h-5 text-foreground" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-            </svg>
+          <button
+            onClick={handleLogout}
+            className="px-3 py-2 text-sm font-medium text-foreground hover:bg-primary-50 rounded-lg transition"
+          >
+            Log out
           </button>
         </div>
 
