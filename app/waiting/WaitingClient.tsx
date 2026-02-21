@@ -42,12 +42,20 @@ export default function WaitingClient({
         This page updates every few seconds. When the admin starts your pool, you&apos;ll be able to
         start matching.
       </p>
-      <Link
-        href="/waiting"
-        className="mt-6 inline-block text-pink-600 hover:text-pink-700 font-medium"
-      >
-        Refresh
-      </Link>
+      <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center items-center">
+        <Link
+          href="/preferences"
+          className="w-full sm:w-auto px-6 py-3 bg-gray-100 text-gray-800 rounded-lg font-medium hover:bg-gray-200 transition text-center"
+        >
+          Edit your profile
+        </Link>
+        <Link
+          href="/waiting"
+          className="w-full sm:w-auto inline-block text-pink-600 hover:text-pink-700 font-medium text-center"
+        >
+          Refresh
+        </Link>
+      </div>
     </div>
   )
 }

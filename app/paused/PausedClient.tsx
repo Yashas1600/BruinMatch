@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import Link from 'next/link'
 import { getPoolStatus } from '@/app/actions/pool'
 
 export default function PausedClient({ poolCode }: { poolCode: string }) {
@@ -24,6 +25,12 @@ export default function PausedClient({ poolCode }: { poolCode: string }) {
       <p className="text-sm text-gray-500 mt-6">
         This page will update automatically when matching resumes.
       </p>
+      <Link
+        href="/preferences"
+        className="mt-6 inline-block px-6 py-3 bg-gray-100 text-gray-800 rounded-lg font-medium hover:bg-gray-200 transition"
+      >
+        Edit your profile
+      </Link>
     </div>
   )
 }
